@@ -1,0 +1,77 @@
+[gd_scene load_steps=6 format=3 uid="uid://b4gj4xdg6domd"]
+
+[sub_resource type="Animation" id="Animation_n0o27"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_5b1kq"]
+resource_name = "breathe"
+length = 2.5
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:scale")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.6, 2, 2.5),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1.2, 1.2), Vector2(1, 1), Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Creature:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(),
+"transitions": PackedFloat32Array(),
+"update": 0,
+"values": []
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_s6012"]
+_data = {
+"RESET": SubResource("Animation_n0o27"),
+"breathe": SubResource("Animation_5b1kq")
+}
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_vif41"]
+animation = &"breathe"
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_ukhe6"]
+nodes/breathe/node = SubResource("AnimationNodeAnimation_vif41")
+nodes/breathe/position = Vector2(100, 140)
+node_connections = [&"output", 0, &"breathe"]
+
+[node name="Creature" type="Node2D"]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+root_node = NodePath("../Creature")
+autoplay = "breathe"
+libraries = {
+"": SubResource("AnimationLibrary_s6012")
+}
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+tree_root = SubResource("AnimationNodeBlendTree_ukhe6")
+anim_player = NodePath("../AnimationPlayer")
+
+[node name="Creature" type="Polygon2D" parent="."]
+color = Color(0.831373, 0.65098, 0.447059, 1)
+offset = Vector2(-38, -35)
+polygon = PackedVector2Array(48.65, 24.869, 50.216, 25.775, 51.862, 26.544, 53.591, 27.175, 55.4, 27.669, 56.275, 27.719, 57.15, 27.769, 58.025, 27.819, 58.9, 27.869, 61.244, 27.775, 63.075, 27.494, 64.394, 27.025, 65.2, 26.369, 64.95, 25.728, 63.65, 24.506, 61.3, 22.703, 57.9, 20.319, 53.828, 17.597, 49.812, 15.081, 45.853, 12.772, 41.95, 10.669, 30.822, 5.3, 21.937, 1.744, 15.297, 0, 10.9, 0.069, 8.619, 1.191, 6.575, 3.256, 4.769, 6.266, 3.2, 10.219, 1.8, 15.275, 0.8, 21.044, 0.2, 27.525, 0, 34.719, 0, 34.869, 0.2, 42.041, 0.8, 48.506, 1.8, 54.266, 3.2, 59.319, 4.769, 63.275, 6.575, 66.294, 8.619, 68.375, 10.9, 69.519, 15.297, 69.566, 21.937, 67.806, 30.822, 64.241, 41.95, 58.869, 45.853, 56.769, 49.812, 54.469, 53.828, 51.969, 57.9, 49.269, 61.3, 46.862, 63.65, 45.044, 64.95, 43.812, 65.2, 43.169, 64.394, 42.512, 63.075, 42.044, 61.244, 41.762, 58.9, 41.669, 58.025, 41.731, 57.15, 41.794, 56.275, 41.856, 55.4, 41.919, 53.591, 42.391, 51.862, 43.006, 50.216, 43.766, 48.65, 44.669, 46.184, 46.097, 43.887, 47.181, 41.759, 47.922, 39.8, 48.319, 37.716, 48.375, 35.612, 48.044, 33.491, 47.325, 31.35, 46.219, 30.7, 45.706, 30.05, 45.194, 29.4, 44.681, 28.75, 44.169, 27.069, 42.144, 25.875, 39.919, 25.169, 37.494, 24.95, 34.869, 24.95, 34.719, 25.169, 32.075, 25.875, 29.644, 27.069, 27.425, 28.75, 25.419, 29.4, 24.894, 30.05, 24.369, 30.7, 23.844, 31.35, 23.319, 33.491, 22.212, 35.612, 21.494, 37.716, 21.162, 39.8, 21.219, 41.759, 21.616, 43.887, 22.356, 46.184, 23.441, 48.65, 24.869)

@@ -1,0 +1,22 @@
+[gd_scene load_steps=5 format=3 uid="uid://bfl30eeaw1gl1"]
+
+[ext_resource type="PackedScene" uid="uid://bkl13gmgke4un" path="res://alga.tscn" id="1_yn5nv"]
+[ext_resource type="PackedScene" uid="uid://b4gj4xdg6domd" path="res://creature.tscn" id="2_tvamx"]
+[ext_resource type="PackedScene" uid="uid://d17vitwvyu7fp" path="res://feeder.tscn" id="3_desqn"]
+[ext_resource type="PackedScene" uid="uid://dfq2enfdbvmhe" path="res://muck.tscn" id="4_lht3n"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="Alga" parent="." instance=ExtResource("1_yn5nv")]
+position = Vector2(-100, -102)
+
+[node name="Creature" parent="." instance=ExtResource("2_tvamx")]
+position = Vector2(-308, -205)
+
+[node name="Feeder" parent="." instance=ExtResource("3_desqn")]
+position = Vector2(185, -183)
+
+[node name="Muck" parent="." instance=ExtResource("4_lht3n")]
+position = Vector2(356, -139)
