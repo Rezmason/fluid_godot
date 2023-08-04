@@ -1,0 +1,23 @@
+State transition in alga
+Coding
+	Alga network
+	Creatures on alga
+	TEMPORARY: click an alga to feed it
+	Creatures jump to fed algae
+		Fed algae with creatures on them turn back to empty
+	Muck pool
+		Just make it the max amount of muck
+	Clicking a creature makes Muck on a neighboring empty or fed alga
+		Muck spreads to neighboring muck
+	Start condition: muck created
+	Win condition: all muck destroyed
+	Lose condition: too much muck
+	Feeders
+		Fake floating
+		Metaballs?
+		Combining logic
+		Exploding logic
+		REMOVE click-on-alga logic
+		Triple feeders feed algae
+			Sum of distance squared > threshold?
+Splash screen
