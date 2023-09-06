@@ -1,4 +1,3 @@
-State transition in alga
 Coding
 	Alga network
 	Creatures on alga

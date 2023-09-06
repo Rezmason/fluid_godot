@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://bfl30eeaw1gl1"]
+[gd_scene load_steps=6 format=3 uid="uid://bfl30eeaw1gl1"]
 
 [ext_resource type="PackedScene" uid="uid://bkl13gmgke4un" path="res://alga.tscn" id="1_yn5nv"]
 [ext_resource type="PackedScene" uid="uid://b4gj4xdg6domd" path="res://creature.tscn" id="2_tvamx"]
@@ -10,13 +10,18 @@
 [node name="Camera2D" type="Camera2D" parent="."]
 
 [node name="Alga" parent="." instance=ExtResource("1_yn5nv")]
-position = Vector2(-100, -102)
+position = Vector2(-127, -473)
+
+[node name="AnimationTree" parent="Alga" index="2"]
+parameters/BlendSpace2D/blend_position = Vector2(0, -3.95)
 
 [node name="Creature" parent="." instance=ExtResource("2_tvamx")]
-position = Vector2(-308, -205)
+position = Vector2(-302, -517)
 
 [node name="Feeder" parent="." instance=ExtResource("3_desqn")]
-position = Vector2(185, -183)
+position = Vector2(158, -554)
 
 [node name="Muck" parent="." instance=ExtResource("4_lht3n")]
-position = Vector2(356, -139)
+position = Vector2(329, -510)
+
+[editable path="Alga"]
