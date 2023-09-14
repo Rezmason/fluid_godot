@@ -1,5 +1,4 @@
 Coding
-	Alga network
 	Creatures on alga
 	TEMPORARY: click an alga to feed it
 	Creatures jump to fed algae
