@@ -16,8 +16,10 @@ public partial class Game : Node2D
 
 		public bool fed = false;
 		public bool mucked = false;
+		public Creature occupant = null;
 
-		public Lilypad() {
+		public Lilypad()
+		{
 			scene = new Node2D();
 			muck = (Node2D)muckArt.Instantiate();
 			scene.AddChild(muck);
@@ -30,21 +32,42 @@ public partial class Game : Node2D
 		}
 	}
 
-	List<List<Lilypad>> lilypads = new List<List<Lilypad>>();
+	private class Creature {
+		public Node2D scene;
+
+		static PackedScene creatureArt = (PackedScene)ResourceLoader.Load("res://creature.tscn");
+
+		public Creature()
+		{
+			scene = (Node2D)creatureArt.Instantiate();
+		}
+	}
+
+	List<Lilypad> lilypads = new List<Lilypad>();
+	List<Creature> creatures = new List<Creature>();
 
 	public override void _Ready()
 	{
+		SpawnLilypads();
+		SpawnCreatures();
+	}
+
+	private void SpawnLilypads()
+	{
+		List<List<Lilypad>> grid = new List<List<Lilypad>>();
+
 		const int numRows = 9;
 		int[] numColumns = {10, 9};
 		var spacing = new Vector2(110, 90);
 		for (int i = 0; i < numRows; i++) {
 			var rowOffset = new Vector2(1 - numColumns[i % 2], 1 - numRows) / 2;
 			var row = new List<Lilypad>();
-			lilypads.Add(row);
+			grid.Add(row);
 			for (int j = 0; j < numColumns[i % 2]; j++) {
 				var lilypad = new Lilypad();
 				lilypad.scene.Position = (new Vector2(j, i) + rowOffset) * spacing;
 				row.Add(lilypad);
+				lilypads.Add(lilypad);
 				AddChild(lilypad.scene);
 				// lilypad.label.Text = $"{i},{j}";
 			}
@@ -57,14 +80,30 @@ public partial class Game : Node2D
 
 		for (int i = 0; i < numRows; i++) {
 			for (int j = 1; j < numColumns[i % 2]; j++) {
-				ConnectNeighbors(lilypads[i][j], lilypads[i][j - 1]);
+				ConnectNeighbors(grid[i][j], grid[i][j - 1]);
 				if (i > 0) {
-					ConnectNeighbors(lilypads[i][j], lilypads[i - 1][j - ((i + 1) % 2)]);
+					ConnectNeighbors(grid[i][j], grid[i - 1][j - ((i + 1) % 2)]);
 				}
 				if (i < numRows - 1) {
-					ConnectNeighbors(lilypads[i][j], lilypads[i + 1][j - ((i + 1) % 2)]);
+					ConnectNeighbors(grid[i][j], grid[i + 1][j - ((i + 1) % 2)]);
 				}
 			}
+		}
+	}
+
+	private void SpawnCreatures()
+	{
+		Random rnd = new Random();
+		const int numCreatures = 2;
+		for (int i = 0; i < numCreatures; i++) {
+			var creature = new Creature();
+			creatures.Add(creature);
+			var lilypad = lilypads[rnd.Next(lilypads.Count)];
+			while (lilypad.occupant != null) {
+				lilypad = lilypads[rnd.Next(lilypads.Count)];
+			}
+			lilypad.occupant = creature;
+			lilypad.scene.AddChild(creature.scene);
 		}
 	}
 
@@ -73,3 +112,37 @@ public partial class Game : Node2D
 
 	}
 }
+
+/*
+
+
+
+let numNodes = 0;
+let offsetX = -1;
+let ike = 0;
+while (ike * 90 + 30 < height) {
+	numNodes++;
+	offsetX = (offsetX == 0) ? 55 : 0;
+	let jen = 0;
+	while (jen * 110 + 20 < width)
+	{
+			const depth = nodeHolder.getNextHighestDepth();
+			const node = nodeHolder.attachMovie("node", "node_" + ike + "_" + jen, depth);
+			node._x = node.restX = jen * 110 + 20 + offsetX;
+			node._y = node.restY = ike * 90 + 30;
+			node.dirty = false;
+			node.inhabitant = undefined;
+			node.fertilized = false;
+			node.neighbors = [];
+			nodes.push(node);
+
+			const muck = muckHolder.attachMovie("muck", "muck_" + ike + "_" + jen, depth);
+			node.muck = muck;
+			muck._x = muck.restX = node._x;
+			muck._y = muck.restY = node._y;
+			mucks.push(muck);
+			++jen;
+	}
+	++ike;
+}
+*/

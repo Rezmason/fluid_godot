@@ -1,10 +1,7 @@
 Coding
-	Creatures on alga
 	TEMPORARY: click an alga to feed it
 	Creatures jump to fed algae
 		Fed algae with creatures on them turn back to empty
-	Muck pool
-		Just make it the max amount of muck
 	Clicking a creature makes Muck on a neighboring empty or fed alga
 		Muck spreads to neighboring muck
 	Start condition: muck created
@@ -18,4 +15,7 @@ Coding
 		REMOVE click-on-alga logic
 		Triple feeders feed algae
 			Sum of distance squared > threshold?
+	Idle creature animation: at a random time, turn in direction of a random neighboring lilypad
+	Push lilypads around when mouse is pressed
+
 Splash screen
