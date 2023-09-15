@@ -152,16 +152,29 @@ public partial class Game : Node2D
 			scene = (Node2D)creatureArt.Instantiate();
 			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), SpawnMuck);
 			
-			GetTimer(1, Move);
+			GetTimer(1, Jump);
 		}
 
-		private void Move()
+		private void Jump()
 		{
-			var nextPad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied);
-			if (nextPad != null)
-			{
-				GD.Print($"Jumping to {nextPad.label}");
+			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied);
+			if (nextLilypad != null) {
+				var oldLilypad = lilypad;
+				lilypad = nextLilypad;
+				oldLilypad.occupant = null;
+				lilypad.occupant = this;
+
+				var position = scene.GlobalPosition;
+				oldLilypad.scene.RemoveChild(scene);
+				lilypad.scene.AddChild(scene);
+				scene.GlobalPosition = position;
+
+				var tween = scene.GetTree().CreateTween();
+				tween.TweenProperty(scene, "position", new Vector2(0, 0), 0.3f)
+					.SetTrans(Tween.TransitionType.Quad)
+					.SetEase(Tween.EaseType.Out);
 			}
+			GetTimer(1, Jump);
 		}
 
 		private void SpawnMuck()
