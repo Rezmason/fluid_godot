@@ -4,34 +4,6 @@ using System.Collections.Generic;
 
 public partial class Game : Node2D
 {
-	private class Lilypad {
-		public Node2D scene;
-		public Node2D alga;
-		public Node2D muck;
-		public Label label;
-		public HashSet<Lilypad> neighbors = new HashSet<Lilypad>();
-
-		static PackedScene algaArt = (PackedScene)ResourceLoader.Load("res://alga.tscn");
-		static PackedScene muckArt = (PackedScene)ResourceLoader.Load("res://muck.tscn");
-
-		public bool fed = false;
-		public bool mucked = false;
-		public Creature occupant = null;
-
-		public Lilypad()
-		{
-			scene = new Node2D();
-			muck = (Node2D)muckArt.Instantiate();
-			scene.AddChild(muck);
-			muck.Visible = false;
-			alga = (Node2D)algaArt.Instantiate();
-			scene.AddChild(alga);
-			label = new Label();
-			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
-			scene.AddChild(label);
-		}
-	}
-
 	private class Clicker
 	{
 		private bool mouseOver = false;
@@ -58,6 +30,34 @@ public partial class Game : Node2D
 				mouseOver = false;
 				mousePressed = false; // Not perfect, but fine for most cases
 			};
+		}
+	}
+
+	private class Lilypad {
+		public Node2D scene;
+		public Node2D alga;
+		public Node2D muck;
+		public Label label;
+		public HashSet<Lilypad> neighbors = new HashSet<Lilypad>();
+
+		static PackedScene algaArt = (PackedScene)ResourceLoader.Load("res://alga.tscn");
+		static PackedScene muckArt = (PackedScene)ResourceLoader.Load("res://muck.tscn");
+
+		public bool fed = false;
+		public bool mucked = false;
+		public Creature occupant = null;
+
+		public Lilypad()
+		{
+			scene = new Node2D();
+			muck = (Node2D)muckArt.Instantiate();
+			scene.AddChild(muck);
+			muck.Visible = false;
+			alga = (Node2D)algaArt.Instantiate();
+			scene.AddChild(alga);
+			label = new Label();
+			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
+			scene.AddChild(label);
 		}
 	}
 
