@@ -172,7 +172,12 @@ public partial class Game : Node2D
 			var startAngle = scene.GlobalRotation;
 			scene.Rotation = startAngle;
 
-			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.fed);
+			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.fed && neighbor.mucked);
+
+			if (nextLilypad == null) {
+				nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.fed);
+			}
+
 			if (nextLilypad != null) {
 				var oldLilypad = lilypad;
 				lilypad = nextLilypad;
