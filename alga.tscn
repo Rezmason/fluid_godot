@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://bkl13gmgke4un"]
+[gd_scene load_steps=13 format=3 uid="uid://bkl13gmgke4un"]
 
 [sub_resource type="Animation" id="Animation_3xcj8"]
 length = 0.001
@@ -125,13 +125,20 @@ animation = &"fed"
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qs6r4"]
 animation = &"mucked"
 
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_0mnie"]
+animation = &"fed"
+
 [sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_s33dn"]
+auto_triangles = false
 blend_point_0/node = SubResource("AnimationNodeAnimation_i6row")
 blend_point_0/pos = Vector2(0, 0)
 blend_point_1/node = SubResource("AnimationNodeAnimation_befx6")
 blend_point_1/pos = Vector2(0, 1)
 blend_point_2/node = SubResource("AnimationNodeAnimation_qs6r4")
 blend_point_2/pos = Vector2(1, 0)
+blend_point_3/node = SubResource("AnimationNodeAnimation_0mnie")
+blend_point_3/pos = Vector2(1, 1)
+triangles = PackedInt32Array(0, 1, 2, 1, 2, 3)
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ce3bo"]
 advance_mode = 2
@@ -148,7 +155,8 @@ graph_offset = Vector2(-185.33, -41.918)
 [node name="Alga" type="Polygon2D" parent="."]
 z_index = 1
 position = Vector2(0.156604, 0.0491058)
-color = Color(0.968627, 0.6, 0.396078, 1)
+scale = Vector2(0.4, 0.4)
+color = Color(0.956863, 0.913725, 0.796078, 1)
 offset = Vector2(-22.5, -22.5)
 antialiased = true
 polygon = PackedVector2Array(38.25, 6.55, 34.822, 3.684, 31.038, 1.638, 26.897, 0.409, 22.4, 0, 17.922, 0.409, 13.787, 1.638, 9.997, 3.684, 6.55, 6.55, 3.684, 9.997, 1.637, 13.788, 0.409, 17.922, 0, 22.4, 0.409, 26.878, 1.637, 31.013, 3.684, 34.803, 6.55, 38.25, 9.997, 41.116, 13.787, 43.163, 17.922, 44.391, 22.4, 44.8, 26.897, 44.391, 31.038, 43.163, 34.822, 41.116, 38.25, 38.25, 41.116, 34.803, 43.162, 31.013, 44.391, 26.878, 44.8, 22.4, 44.391, 17.922, 43.162, 13.788, 41.116, 9.997, 38.25, 6.55)
@@ -168,4 +176,6 @@ parameters/AlgaBlend/blend_position = Vector2(0, 0)
 [node name="Area2D" type="Area2D" parent="."]
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D"]
-polygon = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+position = Vector2(-9, -9)
+scale = Vector2(0.4, 0.4)
+polygon = PackedVector2Array(38.25, 6.55, 34.822, 3.684, 31.038, 1.638, 26.897, 0.409, 22.4, 0, 17.922, 0.409, 13.787, 1.638, 9.997, 3.684, 6.55, 6.55, 3.684, 9.997, 1.637, 13.788, 0.409, 17.922, 0, 22.4, 0.409, 26.878, 1.637, 31.013, 3.684, 34.803, 6.55, 38.25, 9.997, 41.116, 13.787, 43.163, 17.922, 44.391, 22.4, 44.8, 26.897, 44.391, 31.038, 43.163, 34.822, 41.116, 38.25, 38.25, 41.116, 34.803, 43.162, 31.013, 44.391, 26.878, 44.8, 22.4, 44.391, 17.922, 43.162, 13.788, 41.116, 9.997, 38.25, 6.55)

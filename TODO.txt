@@ -1,5 +1,4 @@
 Coding
-	Fix the fed mucked blend state
 
 	Start condition: muck created
 	Win condition: all muck destroyed
