@@ -86,6 +86,16 @@ public partial class Game : Node2D
 				AnimateAlga();
 			}
 		}
+
+		public void GetMuckFrom(Lilypad origin)
+		{
+			if (!mucked)
+			{
+				mucked = true;
+				muck.Visible = true;
+				AnimateAlga();
+			}
+		}
 		
 		public static Lilypad GetRandomNeighbor(Lilypad lilypad, Predicate<Lilypad> pred)
 		{
@@ -105,13 +115,22 @@ public partial class Game : Node2D
 	private class Creature {
 		public Node2D scene;
 		private Clicker clicker;
+		public Lilypad lilypad;
 
 		static PackedScene creatureArt = (PackedScene)ResourceLoader.Load("res://creature.tscn");
 
 		public Creature()
 		{
 			scene = (Node2D)creatureArt.Instantiate();
-			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), () => GD.Print("*fart*"));
+			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), SpawnMuck);
+		}
+
+		private void SpawnMuck()
+		{
+			var cleanNeighbor = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.mucked);
+			if (cleanNeighbor != null) {
+				cleanNeighbor.GetMuckFrom(lilypad);
+			}
 		}
 	}
 
@@ -175,6 +194,7 @@ public partial class Game : Node2D
 				lilypad = lilypads[rnd.Next(lilypads.Count)];
 			}
 			lilypad.occupant = creature;
+			creature.lilypad = lilypad;
 			lilypad.scene.AddChild(creature.scene);
 		}
 	}
