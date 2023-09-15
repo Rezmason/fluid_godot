@@ -32,14 +32,45 @@ public partial class Game : Node2D
 		}
 	}
 
+	private class Clicker
+	{
+		private bool mouseOver = false;
+		private bool mousePressed = false;
+		private CollisionObject2D target;
+		private Action callback;
+
+		public Clicker(CollisionObject2D target, Action callback)
+		{
+			this.target = target;
+			this.callback = callback;
+
+			target.InputEvent += (_, inputEvent, _) => {
+				var mouseButtonEvent = inputEvent as InputEventMouseButton;
+				if (mouseButtonEvent == null || mouseButtonEvent.ButtonIndex != MouseButton.Left) return;
+				bool mouseWasPressed = mousePressed;
+				mousePressed = mouseButtonEvent.Pressed;
+				if (mouseWasPressed && mouseOver && !mousePressed) {
+					this.callback();
+				}
+			};
+			target.MouseEntered += () => mouseOver = true;
+			target.MouseExited += () => {
+				mouseOver = false;
+				mousePressed = false; // Not perfect, but fine for most cases
+			};
+		}
+	}
+
 	private class Creature {
 		public Node2D scene;
+		private Clicker clicker;
 
 		static PackedScene creatureArt = (PackedScene)ResourceLoader.Load("res://creature.tscn");
 
 		public Creature()
 		{
 			scene = (Node2D)creatureArt.Instantiate();
+			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), () => GD.Print("*fart*"));
 		}
 	}
 
