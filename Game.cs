@@ -96,7 +96,7 @@ public partial class Game : Node2D
 		private void AnimateMuck()
 		{
 			muck.Visible = true;
-			var tween = alga.GetTree().CreateTween().SetParallel(true)
+			var tween = muck.CreateTween().SetParallel(true)
 				.SetTrans(Tween.TransitionType.Quad)
 				.SetEase(Tween.EaseType.Out);
 			var duration = 0.3f;
@@ -111,7 +111,7 @@ public partial class Game : Node2D
 
 		private void AnimateAlga()
 		{
-			var tween = alga.GetTree().CreateTween();
+			var tween = alga.CreateTween();
 			tween.TweenProperty(algaAnimationTree, "parameters/AlgaBlend/blend_position",
 				new Vector2(
 					mucky ? 1 : 0,
@@ -211,7 +211,7 @@ public partial class Game : Node2D
 
 		private void Jump()
 		{
-			var tween = scene.GetTree().CreateTween();
+			var tween = scene.CreateTween();
 			var startAngle = scene.GlobalRotation;
 			scene.Rotation = startAngle;
 
