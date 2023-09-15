@@ -86,6 +86,20 @@ public partial class Game : Node2D
 				AnimateAlga();
 			}
 		}
+		
+		public static Lilypad GetRandomNeighbor(Lilypad lilypad, Predicate<Lilypad> pred)
+		{
+			var candidates = new List<Lilypad>();
+			foreach (var neighbor in lilypad.neighbors)
+			{
+				if (pred(neighbor)) {
+					candidates.Add(neighbor);
+				}
+			}
+			if (candidates.Count == 0) return null;
+			Random rnd = new Random();
+			return candidates[rnd.Next(candidates.Count)];
+		}
 	}
 
 	private class Creature {
