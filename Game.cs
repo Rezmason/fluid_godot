@@ -185,6 +185,14 @@ public partial class Game : Node2D
 				tween.TweenProperty(scene, "position", new Vector2(0, 0), 0.3f)
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
+			} else {
+				var someLilypadPosition = Lilypad.GetRandomNeighbor(lilypad).scene.GlobalPosition;
+				var angleToRandomLilypad = lilypad.scene.GetAngleTo(someLilypadPosition);
+				if (angleToRandomLilypad - startAngle >  Math.PI) angleToRandomLilypad -= (float)Math.PI * 2;
+				if (angleToRandomLilypad - startAngle < -Math.PI) angleToRandomLilypad += (float)Math.PI * 2;
+				tween.TweenProperty(scene, "rotation", angleToRandomLilypad, 0.3f)
+					.SetTrans(Tween.TransitionType.Quad)
+					.SetEase(Tween.EaseType.Out);
 			}
 			GetTimer(1, Jump);
 		}
