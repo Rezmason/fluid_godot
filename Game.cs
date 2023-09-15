@@ -47,7 +47,7 @@ public partial class Game : Node2D
 		static PackedScene muckArt = (PackedScene)ResourceLoader.Load("res://muck.tscn");
 
 		public bool ripe = false;
-		public bool mucked = false;
+		public bool mucky = false;
 		public Creature occupant = null;
 
 		public Lilypad()
@@ -72,7 +72,7 @@ public partial class Game : Node2D
 			// TEMPORARY
 			algaClicker = new Clicker(alga.GetNode<Area2D>("Area2D"), () => {
 				RipenAlga();
-				if (mucked) SpreadMuck();
+				if (mucky) SpreadMuck();
 			});
 		}
 
@@ -83,11 +83,11 @@ public partial class Game : Node2D
 				.SetTrans(Tween.TransitionType.Quad)
 				.SetEase(Tween.EaseType.Out);
 			var duration = 0.3f;
-			float isHere = mucked ? 1 : 0;
+			float isHere = mucky ? 1 : 0;
 			tween.TweenProperty(muck, "position", new Vector2(0, 0), duration);
 			tween.TweenProperty(muck, "scale", new Vector2(isHere, isHere), duration);
 			tween.TweenProperty(muck, "modulate", new Color(1, 1, 1, isHere), duration);
-			tween.TweenProperty(muck, "visible", mucked, duration);
+			tween.TweenProperty(muck, "visible", mucky, duration);
 		}
 
 		public bool Occupied => occupant != null;
@@ -97,7 +97,7 @@ public partial class Game : Node2D
 			var tween = alga.GetTree().CreateTween();
 			tween.TweenProperty(algaAnimationTree, "parameters/AlgaBlend/blend_position",
 				new Vector2(
-					mucked ? 1 : 0,
+					mucky ? 1 : 0,
 					ripe ? 1 : 0
 				), 0.5f
 			)
@@ -117,7 +117,7 @@ public partial class Game : Node2D
 		{
 			if (ripe) {
 				ripe = false;
-				mucked = false;
+				mucky = false;
 				AnimateMuck();
 				AnimateAlga();
 			}
@@ -126,7 +126,7 @@ public partial class Game : Node2D
 		private void WaitToSpreadMuck()
 		{
 			GetTimer(Game.random.NextDouble() * 3 + 1, () => {
-				if (!mucked) return;
+				if (!mucky) return;
 				if (Game.random.NextDouble() < 0.25) SpreadMuck();
 				WaitToSpreadMuck();
 			});
@@ -134,7 +134,7 @@ public partial class Game : Node2D
 
 		public void SpreadMuck()
 		{
-			var cleanNeighbor = Lilypad.GetRandomNeighbor(this, neighbor => !neighbor.mucked);
+			var cleanNeighbor = Lilypad.GetRandomNeighbor(this, neighbor => !neighbor.mucky);
 			if (cleanNeighbor != null) {
 				cleanNeighbor.GetMuckFrom(scene.GlobalPosition);
 			}
@@ -142,7 +142,7 @@ public partial class Game : Node2D
 
 		private void GetMuckFrom(Vector2 origin)
 		{
-			mucked = true;
+			mucky = true;
 			muck.GlobalPosition = origin;
 			AnimateMuck();
 			AnimateAlga();
@@ -196,7 +196,7 @@ public partial class Game : Node2D
 			var startAngle = scene.GlobalRotation;
 			scene.Rotation = startAngle;
 
-			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.ripe && neighbor.mucked);
+			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.ripe && neighbor.mucky);
 
 			if (nextLilypad == null) {
 				nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.ripe);
