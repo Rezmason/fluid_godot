@@ -76,6 +76,23 @@ public partial class Game : Node2D
 			});
 		}
 
+		public void Reset()
+		{
+			mucky = false;
+			ripe = false;
+			if (occupant != null) {
+				scene.RemoveChild(occupant.scene);
+				occupant = null;
+			}
+
+			muck.Visible = false;
+			muck.Position = Vector2.Zero;
+			muck.Modulate = new Color("white");
+
+			algaAnimationTree.Set("parameters/AlgaBlend/blend_position", Vector2.Zero);
+			alga.Position = Vector2.Zero;
+		}
+
 		private void AnimateMuck()
 		{
 			muck.Visible = true;
@@ -120,6 +137,7 @@ public partial class Game : Node2D
 				mucky = false;
 				AnimateMuck();
 				AnimateAlga();
+				Game.MuckChanged(this);
 			}
 		}
 
@@ -146,9 +164,10 @@ public partial class Game : Node2D
 			muck.GlobalPosition = origin;
 			AnimateMuck();
 			AnimateAlga();
+			Game.MuckChanged(this);
 			WaitToSpreadMuck();
 		}
-		
+
 		public static Lilypad GetRandomNeighbor(Lilypad lilypad, Predicate<Lilypad> pred = null)
 		{
 			var candidates = new List<Lilypad>();
@@ -207,7 +226,7 @@ public partial class Game : Node2D
 				lilypad = nextLilypad;
 				oldLilypad.occupant = null;
 				lilypad.occupant = this;
-				
+
 				lilypad.EatAlga();
 
 				var angleToLilypad = oldLilypad.scene.GetAngleTo(lilypad.scene.GlobalPosition);
@@ -245,11 +264,16 @@ public partial class Game : Node2D
 
 	private static SceneTree _sceneTree;
 	public static Random random = new Random();
+	public static Action<Lilypad> MuckChanged;
+	static HashSet<Lilypad> muckyLilypads = new HashSet<Lilypad>();
+	static bool gameCanEnd = false;
+	static bool resetting = false;
 
 	public override void _Ready()
 	{
 		_sceneTree = GetTree();
-		
+		MuckChanged += DetectEndgame;
+
 		SpawnLilypads();
 		SpawnCreatures();
 	}
@@ -272,6 +296,7 @@ public partial class Game : Node2D
 				lilypads.Add(lilypad);
 				AddChild(lilypad.scene);
 				// lilypad.label.Text = $"{i},{j}";
+				lilypad.Reset();
 			}
 		}
 
@@ -291,14 +316,24 @@ public partial class Game : Node2D
 				}
 			}
 		}
+
+		foreach (var lilypad in lilypads) {
+			GD.Print(lilypad.neighbors.Count);
+		}
 	}
 
 	private void SpawnCreatures()
 	{
 		const int numCreatures = 2;
 		for (int i = 0; i < numCreatures; i++) {
-			var creature = new Creature();
-			creatures.Add(creature);
+			creatures.Add(new Creature());
+		}
+		ResetCreatures();
+	}
+
+	private void ResetCreatures()
+	{
+		foreach (var creature in creatures) {
 			var lilypad = lilypads[Game.random.Next(lilypads.Count)];
 			while (lilypad.occupant != null) {
 				lilypad = lilypads[Game.random.Next(lilypads.Count)];
@@ -307,9 +342,35 @@ public partial class Game : Node2D
 		}
 	}
 
-	public override void _Process(double delta)
+	private void DetectEndgame(Lilypad lilypad)
 	{
-		
+		if (lilypad.mucky) {
+			muckyLilypads.Add(lilypad);
+		} else {
+			muckyLilypads.Remove(lilypad);
+		}
+		int numMuckyLilypads = muckyLilypads.Count;
+
+		if (gameCanEnd) {
+			if (numMuckyLilypads == 0) {
+				Reset();
+			} else if ((float)numMuckyLilypads / lilypads.Count > 0.6) {
+				Reset();
+			}
+		} else if (!resetting && numMuckyLilypads >= 3) {
+			gameCanEnd = true;
+		}
+	}
+
+	private void Reset()
+	{
+		resetting = true;
+		gameCanEnd = false;
+		foreach (var lilypad in lilypads) {
+			lilypad.Reset();
+		}
+		ResetCreatures();
+		muckyLilypads.Clear();
 	}
 
 	public static SceneTreeTimer GetTimer(double timeSec, Action action)
