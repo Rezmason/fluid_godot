@@ -264,7 +264,7 @@ public partial class Game : Node2D
 
 	private static SceneTree _sceneTree;
 	public static Random random = new Random();
-	public static Action<Lilypad> MuckChanged;
+	private static Action<Lilypad> MuckChanged;
 	static HashSet<Lilypad> muckyLilypads = new HashSet<Lilypad>();
 	static bool gameCanEnd = false;
 	static bool resetting = false;
