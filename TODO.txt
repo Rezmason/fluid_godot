@@ -1,5 +1,4 @@
 Coding
-	TEMPORARY: click an alga to feed it
 	Creatures jump to fed algae
 		Fed algae with creatures on them turn back to empty
 	Clicking a creature makes Muck on a neighboring empty or fed alga

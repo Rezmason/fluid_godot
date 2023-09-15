@@ -40,6 +40,8 @@ public partial class Game : Node2D
 		public Label label;
 		public HashSet<Lilypad> neighbors = new HashSet<Lilypad>();
 
+		private AnimationTree algaAnimationTree;
+
 		static PackedScene algaArt = (PackedScene)ResourceLoader.Load("res://alga.tscn");
 		static PackedScene muckArt = (PackedScene)ResourceLoader.Load("res://muck.tscn");
 
@@ -58,6 +60,29 @@ public partial class Game : Node2D
 			label = new Label();
 			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
 			scene.AddChild(label);
+
+			algaAnimationTree = alga.GetNode<AnimationTree>("AnimationTree");
+		}
+
+		private void AnimateAlga()
+		{
+			var tween = alga.GetTree().CreateTween();
+			tween.TweenProperty(algaAnimationTree, "parameters/AlgaBlend/blend_position",
+				new Vector2(
+					mucked ? 1 : 0,
+					fed ? 1 : 0
+				), 0.5f
+			)
+			.SetTrans(Tween.TransitionType.Quad)
+			.SetEase(Tween.EaseType.Out);
+		}
+
+		private void FeedAlga()
+		{
+			if (!fed && occupant == null) {
+				fed = true;
+				AnimateAlga();
+			}
 		}
 	}
 

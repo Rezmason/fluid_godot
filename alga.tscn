@@ -137,11 +137,11 @@ blend_point_2/pos = Vector2(1, 0)
 advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_m7uy0"]
-states/BlendSpace2D/node = SubResource("AnimationNodeBlendSpace2D_s33dn")
-states/BlendSpace2D/position = Vector2(289.74, 84.95)
+states/AlgaBlend/node = SubResource("AnimationNodeBlendSpace2D_s33dn")
+states/AlgaBlend/position = Vector2(289.74, 84.95)
 states/Start/position = Vector2(123, 83.95)
-transitions = ["Start", "BlendSpace2D", SubResource("AnimationNodeStateMachineTransition_ce3bo")]
-graph_offset = Vector2(-211.19, -205.643)
+transitions = ["Start", "AlgaBlend", SubResource("AnimationNodeStateMachineTransition_ce3bo")]
+graph_offset = Vector2(-185.33, -41.918)
 
 [node name="Alga" type="Node2D"]
 
@@ -162,4 +162,9 @@ libraries = {
 tree_root = SubResource("AnimationNodeStateMachine_m7uy0")
 anim_player = NodePath("../AnimationPlayer")
 active = true
-parameters/BlendSpace2D/blend_position = Vector2(0, 0)
+parameters/AlgaBlend/blend_position = Vector2(0, 0)
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D"]
+polygon = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
