@@ -40,6 +40,7 @@ public partial class Game : Node2D
 		public Label label;
 		public HashSet<Lilypad> neighbors = new HashSet<Lilypad>();
 
+		private Clicker algaClicker;
 		private AnimationTree algaAnimationTree;
 
 		static PackedScene algaArt = (PackedScene)ResourceLoader.Load("res://alga.tscn");
@@ -61,6 +62,7 @@ public partial class Game : Node2D
 			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
 			scene.AddChild(label);
 
+			algaClicker = new Clicker(alga.GetNode<Area2D>("Area2D"), FeedAlga); // TEMPORARY
 			algaAnimationTree = alga.GetNode<AnimationTree>("AnimationTree");
 		}
 
