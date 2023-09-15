@@ -64,7 +64,12 @@ public partial class Game : Node2D
 			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
 			scene.AddChild(label);
 
-			algaClicker = new Clicker(alga.GetNode<Area2D>("Area2D"), FeedAlga); // TEMPORARY
+			// TEMPORARY
+			algaClicker = new Clicker(alga.GetNode<Area2D>("Area2D"), () => {
+				GrowAlga();
+				if (mucked) SpreadMuck();
+			});
+
 			algaAnimationTree = alga.GetNode<AnimationTree>("AnimationTree");
 		}
 
@@ -97,7 +102,7 @@ public partial class Game : Node2D
 			.SetEase(Tween.EaseType.Out);
 		}
 
-		private void FeedAlga()
+		public void GrowAlga()
 		{
 			if (!fed && occupant == null) {
 				fed = true;
@@ -105,24 +110,30 @@ public partial class Game : Node2D
 			}
 		}
 
-		private void SpreadMuck()
+		public void EatAlga()
 		{
-			if (!mucked) return;
-			var cleanNeighbor = Lilypad.GetRandomNeighbor(this, neighbor => !neighbor.mucked);
-			if (cleanNeighbor != null) {
-				cleanNeighbor.GetMuckFrom(this);
-			}
-		}
-
-		public void GetMuckFrom(Lilypad origin)
-		{
-			if (!mucked)
-			{
-				mucked = true;
-				muck.GlobalPosition = origin.scene.GlobalPosition;
+			if (fed) {
+				fed = false;
+				mucked = false;
 				AnimateMuck();
 				AnimateAlga();
 			}
+		}
+
+		public void SpreadMuck()
+		{
+			var cleanNeighbor = Lilypad.GetRandomNeighbor(this, neighbor => !neighbor.mucked);
+			if (cleanNeighbor != null) {
+				cleanNeighbor.GetMuckFrom(scene.GlobalPosition);
+			}
+		}
+
+		private void GetMuckFrom(Vector2 origin)
+		{
+			mucked = true;
+			muck.GlobalPosition = origin;
+			AnimateMuck();
+			AnimateAlga();
 		}
 		
 		public static Lilypad GetRandomNeighbor(Lilypad lilypad, Predicate<Lilypad> pred = null)
@@ -150,7 +161,7 @@ public partial class Game : Node2D
 		public Creature()
 		{
 			scene = (Node2D)creatureArt.Instantiate();
-			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), SpawnMuck);
+			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), () => lilypad.SpreadMuck());
 			
 			GetTimer(1, Jump);
 		}
@@ -161,12 +172,14 @@ public partial class Game : Node2D
 			var startAngle = scene.GlobalRotation;
 			scene.Rotation = startAngle;
 
-			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied);
+			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.fed);
 			if (nextLilypad != null) {
 				var oldLilypad = lilypad;
 				lilypad = nextLilypad;
 				oldLilypad.occupant = null;
 				lilypad.occupant = this;
+				
+				lilypad.EatAlga();
 
 				var angleToLilypad = oldLilypad.scene.GetAngleTo(lilypad.scene.GlobalPosition);
 				if (angleToLilypad - startAngle >  Math.PI) angleToLilypad -= (float)Math.PI * 2;
@@ -195,14 +208,6 @@ public partial class Game : Node2D
 					.SetEase(Tween.EaseType.Out);
 			}
 			GetTimer(1, Jump);
-		}
-
-		private void SpawnMuck()
-		{
-			var cleanNeighbor = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.mucked);
-			if (cleanNeighbor != null) {
-				cleanNeighbor.GetMuckFrom(lilypad);
-			}
 		}
 	}
 
