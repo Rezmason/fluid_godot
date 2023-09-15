@@ -82,6 +82,8 @@ public partial class Game : Node2D
 			tween.TweenProperty(muck, "visible", mucked, duration);
 		}
 
+		public bool Occupied => occupant != null;
+
 		private void AnimateAlga()
 		{
 			var tween = alga.GetTree().CreateTween();
@@ -149,6 +151,17 @@ public partial class Game : Node2D
 		{
 			scene = (Node2D)creatureArt.Instantiate();
 			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), SpawnMuck);
+			
+			GetTimer(1, Move);
+		}
+
+		private void Move()
+		{
+			var nextPad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied);
+			if (nextPad != null)
+			{
+				GD.Print($"Jumping to {nextPad.label}");
+			}
 		}
 
 		private void SpawnMuck()
@@ -163,10 +176,14 @@ public partial class Game : Node2D
 	List<Lilypad> lilypads = new List<Lilypad>();
 	List<Creature> creatures = new List<Creature>();
 
+	private static SceneTree _sceneTree;
+
 	public override void _Ready()
 	{
 		SpawnLilypads();
 		SpawnCreatures();
+
+		_sceneTree = GetTree();
 	}
 
 	private void SpawnLilypads()
@@ -227,6 +244,14 @@ public partial class Game : Node2D
 
 	public override void _Process(double delta)
 	{
+		
+	}
 
+	public static SceneTreeTimer GetTimer(double timeSec, Action action)
+	{
+		var timer = _sceneTree.CreateTimer(timeSec);
+		timer.Timeout += action;
+
+		return timer;
 	}
 }
