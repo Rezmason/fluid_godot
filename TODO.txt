@@ -1,5 +1,4 @@
 Coding
-	Fix the layering of muck, algae, creatures and feeders
 	Fix the fed mucked blend state
 
 	Start condition: muck created

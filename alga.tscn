@@ -146,6 +146,7 @@ graph_offset = Vector2(-185.33, -41.918)
 [node name="Alga" type="Node2D"]
 
 [node name="Alga" type="Polygon2D" parent="."]
+z_index = 1
 position = Vector2(0.156604, 0.0491058)
 color = Color(0.968627, 0.6, 0.396078, 1)
 offset = Vector2(-22.5, -22.5)
