@@ -103,6 +103,15 @@ public partial class Game : Node2D
 			}
 		}
 
+		private void SpreadMuck()
+		{
+			if (!mucked) return;
+			var cleanNeighbor = Lilypad.GetRandomNeighbor(this, neighbor => !neighbor.mucked);
+			if (cleanNeighbor != null) {
+				cleanNeighbor.GetMuckFrom(this);
+			}
+		}
+
 		public void GetMuckFrom(Lilypad origin)
 		{
 			if (!mucked)
