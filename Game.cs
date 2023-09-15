@@ -53,13 +53,18 @@ public partial class Game : Node2D
 		public Lilypad()
 		{
 			scene = new Node2D();
+
 			muck = (Node2D)muckArt.Instantiate();
 			muck.Set("modulate", new Color(1, 1, 1, 0));
 			muck.Set("scale", new Vector2(0, 0));
 			muck.Visible = false;
 			scene.AddChild(muck);
+
 			alga = (Node2D)algaArt.Instantiate();
+			algaAnimationTree = alga.GetNode<AnimationTree>("AnimationTree");
 			scene.AddChild(alga);
+
+			// TEMPORARY
 			label = new Label();
 			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
 			scene.AddChild(label);
@@ -69,8 +74,6 @@ public partial class Game : Node2D
 				RipenAlga();
 				if (mucked) SpreadMuck();
 			});
-
-			algaAnimationTree = alga.GetNode<AnimationTree>("AnimationTree");
 		}
 
 		private void AnimateMuck()
@@ -120,6 +123,15 @@ public partial class Game : Node2D
 			}
 		}
 
+		private void WaitToSpreadMuck()
+		{
+			GetTimer(Game.random.NextDouble() * 3 + 1, () => {
+				if (!mucked) return;
+				if (Game.random.NextDouble() < 0.25) SpreadMuck();
+				WaitToSpreadMuck();
+			});
+		}
+
 		public void SpreadMuck()
 		{
 			var cleanNeighbor = Lilypad.GetRandomNeighbor(this, neighbor => !neighbor.mucked);
@@ -134,6 +146,7 @@ public partial class Game : Node2D
 			muck.GlobalPosition = origin;
 			AnimateMuck();
 			AnimateAlga();
+			WaitToSpreadMuck();
 		}
 		
 		public static Lilypad GetRandomNeighbor(Lilypad lilypad, Predicate<Lilypad> pred = null)
