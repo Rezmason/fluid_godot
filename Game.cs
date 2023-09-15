@@ -146,8 +146,7 @@ public partial class Game : Node2D
 				}
 			}
 			if (candidates.Count == 0) return null;
-			Random rnd = new Random();
-			return candidates[rnd.Next(candidates.Count)];
+			return candidates[Game.random.Next(candidates.Count)];
 		}
 	}
 
@@ -156,7 +155,6 @@ public partial class Game : Node2D
 		private Clicker clicker;
 		public Lilypad lilypad;
 
-		static Random rnd = new Random();
 		static PackedScene creatureArt = (PackedScene)ResourceLoader.Load("res://creature.tscn");
 
 		public Creature()
@@ -176,7 +174,7 @@ public partial class Game : Node2D
 
 		private void WaitToJump()
 		{
-			GetTimer(rnd.NextDouble() * 2 + 0.5, Jump);
+			GetTimer(Game.random.NextDouble() * 2 + 0.5, Jump);
 		}
 
 		private void Jump()
@@ -233,6 +231,7 @@ public partial class Game : Node2D
 	List<Creature> creatures = new List<Creature>();
 
 	private static SceneTree _sceneTree;
+	public static Random random = new Random();
 
 	public override void _Ready()
 	{
@@ -283,14 +282,13 @@ public partial class Game : Node2D
 
 	private void SpawnCreatures()
 	{
-		Random rnd = new Random();
 		const int numCreatures = 2;
 		for (int i = 0; i < numCreatures; i++) {
 			var creature = new Creature();
 			creatures.Add(creature);
-			var lilypad = lilypads[rnd.Next(lilypads.Count)];
+			var lilypad = lilypads[Game.random.Next(lilypads.Count)];
 			while (lilypad.occupant != null) {
-				lilypad = lilypads[rnd.Next(lilypads.Count)];
+				lilypad = lilypads[Game.random.Next(lilypads.Count)];
 			}
 			creature.Place(lilypad);
 		}
