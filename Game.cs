@@ -204,37 +204,3 @@ public partial class Game : Node2D
 
 	}
 }
-
-/*
-
-
-
-let numNodes = 0;
-let offsetX = -1;
-let ike = 0;
-while (ike * 90 + 30 < height) {
-	numNodes++;
-	offsetX = (offsetX == 0) ? 55 : 0;
-	let jen = 0;
-	while (jen * 110 + 20 < width)
-	{
-			const depth = nodeHolder.getNextHighestDepth();
-			const node = nodeHolder.attachMovie("node", "node_" + ike + "_" + jen, depth);
-			node._x = node.restX = jen * 110 + 20 + offsetX;
-			node._y = node.restY = ike * 90 + 30;
-			node.dirty = false;
-			node.inhabitant = undefined;
-			node.fertilized = false;
-			node.neighbors = [];
-			nodes.push(node);
-
-			const muck = muckHolder.attachMovie("muck", "muck_" + ike + "_" + jen, depth);
-			node.muck = muck;
-			muck._x = muck.restX = node._x;
-			muck._y = muck.restY = node._y;
-			mucks.push(muck);
-			++jen;
-	}
-	++ike;
-}
-*/
