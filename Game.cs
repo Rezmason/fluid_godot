@@ -46,7 +46,7 @@ public partial class Game : Node2D
 		static PackedScene algaArt = (PackedScene)ResourceLoader.Load("res://alga.tscn");
 		static PackedScene muckArt = (PackedScene)ResourceLoader.Load("res://muck.tscn");
 
-		public bool fed = false;
+		public bool ripe = false;
 		public bool mucked = false;
 		public Creature occupant = null;
 
@@ -66,7 +66,7 @@ public partial class Game : Node2D
 
 			// TEMPORARY
 			algaClicker = new Clicker(alga.GetNode<Area2D>("Area2D"), () => {
-				GrowAlga();
+				RipenAlga();
 				if (mucked) SpreadMuck();
 			});
 
@@ -95,25 +95,25 @@ public partial class Game : Node2D
 			tween.TweenProperty(algaAnimationTree, "parameters/AlgaBlend/blend_position",
 				new Vector2(
 					mucked ? 1 : 0,
-					fed ? 1 : 0
+					ripe ? 1 : 0
 				), 0.5f
 			)
 			.SetTrans(Tween.TransitionType.Quad)
 			.SetEase(Tween.EaseType.Out);
 		}
 
-		public void GrowAlga()
+		public void RipenAlga()
 		{
-			if (!fed && occupant == null) {
-				fed = true;
+			if (!ripe && occupant == null) {
+				ripe = true;
 				AnimateAlga();
 			}
 		}
 
 		public void EatAlga()
 		{
-			if (fed) {
-				fed = false;
+			if (ripe) {
+				ripe = false;
 				mucked = false;
 				AnimateMuck();
 				AnimateAlga();
@@ -172,10 +172,10 @@ public partial class Game : Node2D
 			var startAngle = scene.GlobalRotation;
 			scene.Rotation = startAngle;
 
-			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.fed && neighbor.mucked);
+			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.ripe && neighbor.mucked);
 
 			if (nextLilypad == null) {
-				nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.fed);
+				nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied && neighbor.ripe);
 			}
 
 			if (nextLilypad != null) {
