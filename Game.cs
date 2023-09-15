@@ -156,14 +156,27 @@ public partial class Game : Node2D
 		private Clicker clicker;
 		public Lilypad lilypad;
 
+		static Random rnd = new Random();
 		static PackedScene creatureArt = (PackedScene)ResourceLoader.Load("res://creature.tscn");
 
 		public Creature()
 		{
 			scene = (Node2D)creatureArt.Instantiate();
 			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), () => lilypad.SpreadMuck());
-			
-			GetTimer(1, Jump);
+		}
+
+		public void Place(Lilypad lilypad)
+		{
+			lilypad.occupant = this;
+			this.lilypad = lilypad;
+			lilypad.scene.AddChild(scene);
+			scene.LookAt(Lilypad.GetRandomNeighbor(lilypad).scene.GlobalPosition);
+			WaitToJump();
+		}
+
+		private void WaitToJump()
+		{
+			GetTimer(rnd.NextDouble() * 2 + 0.5, Jump);
 		}
 
 		private void Jump()
@@ -212,7 +225,7 @@ public partial class Game : Node2D
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
 			}
-			GetTimer(1, Jump);
+			WaitToJump();
 		}
 	}
 
@@ -279,9 +292,7 @@ public partial class Game : Node2D
 			while (lilypad.occupant != null) {
 				lilypad = lilypads[rnd.Next(lilypads.Count)];
 			}
-			lilypad.occupant = creature;
-			creature.lilypad = lilypad;
-			lilypad.scene.AddChild(creature.scene);
+			creature.Place(lilypad);
 		}
 	}
 
