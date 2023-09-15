@@ -180,10 +180,10 @@ public partial class Game : Node2D
 
 	public override void _Ready()
 	{
+		_sceneTree = GetTree();
+		
 		SpawnLilypads();
 		SpawnCreatures();
-
-		_sceneTree = GetTree();
 	}
 
 	private void SpawnLilypads()
