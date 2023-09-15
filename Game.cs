@@ -54,8 +54,10 @@ public partial class Game : Node2D
 		{
 			scene = new Node2D();
 			muck = (Node2D)muckArt.Instantiate();
-			scene.AddChild(muck);
+			muck.Set("modulate", new Color(1, 1, 1, 0));
+			muck.Set("scale", new Vector2(0, 0));
 			muck.Visible = false;
+			scene.AddChild(muck);
 			alga = (Node2D)algaArt.Instantiate();
 			scene.AddChild(alga);
 			label = new Label();
@@ -64,6 +66,20 @@ public partial class Game : Node2D
 
 			algaClicker = new Clicker(alga.GetNode<Area2D>("Area2D"), FeedAlga); // TEMPORARY
 			algaAnimationTree = alga.GetNode<AnimationTree>("AnimationTree");
+		}
+
+		private void AnimateMuck()
+		{
+			muck.Visible = true;
+			var tween = alga.GetTree().CreateTween().SetParallel(true)
+				.SetTrans(Tween.TransitionType.Quad)
+				.SetEase(Tween.EaseType.Out);
+			var duration = 0.3f;
+			float isHere = mucked ? 1 : 0;
+			tween.TweenProperty(muck, "position", new Vector2(0, 0), duration);
+			tween.TweenProperty(muck, "scale", new Vector2(isHere, isHere), duration);
+			tween.TweenProperty(muck, "modulate", new Color(1, 1, 1, isHere), duration);
+			tween.TweenProperty(muck, "visible", mucked, duration);
 		}
 
 		private void AnimateAlga()
@@ -92,7 +108,8 @@ public partial class Game : Node2D
 			if (!mucked)
 			{
 				mucked = true;
-				muck.Visible = true;
+				muck.GlobalPosition = origin.scene.GlobalPosition;
+				AnimateMuck();
 				AnimateAlga();
 			}
 		}

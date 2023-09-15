@@ -1,8 +1,7 @@
 Coding
 	Creatures jump to fed algae
 		Fed algae with creatures on them turn back to empty
-	Clicking a creature makes Muck on a neighboring empty or fed alga
-		Muck spreads to neighboring muck
+	Muck spreads to neighboring muck
 	Start condition: muck created
 	Win condition: all muck destroyed
 	Lose condition: too much muck
