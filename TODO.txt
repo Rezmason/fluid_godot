@@ -1,9 +1,6 @@
 Coding
 
-	Start condition: muck created
-	Win condition: all muck destroyed
-	Lose condition: too much muck
-
+	Leftmost nodes aren't neighbored right
 	Feeders
 		Fake floating
 		Metaballs?
@@ -12,7 +9,6 @@ Coding
 		REMOVE click-on-alga logic
 		Triple feeders feed algae
 			Sum of distance squared > threshold?
-	Idle creature animation: at a random time, turn in direction of a random neighboring lilypad
 	Push lilypads around when mouse is pressed
 
 Splash screen

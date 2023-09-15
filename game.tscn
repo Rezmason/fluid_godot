@@ -6,3 +6,7 @@
 script = ExtResource("1_brxqa")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="FullscreenFade" type="Polygon2D" parent="."]
+z_index = 10
+polygon = PackedVector2Array(-512, -384, 512, -384, 512, 384, -512, 384)

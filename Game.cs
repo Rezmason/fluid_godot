@@ -268,14 +268,22 @@ public partial class Game : Node2D
 	static HashSet<Lilypad> muckyLilypads = new HashSet<Lilypad>();
 	static bool gameCanEnd = false;
 	static bool resetting = false;
+	static Node2D fade;
 
 	public override void _Ready()
 	{
 		_sceneTree = GetTree();
 		MuckChanged += DetectEndgame;
+		fade = GetNode<Polygon2D>("FullscreenFade");
 
 		SpawnLilypads();
 		SpawnCreatures();
+
+		var tween = fade.CreateTween()
+			.SetTrans(Tween.TransitionType.Quad)
+			.SetEase(Tween.EaseType.Out);
+		tween.TweenProperty(fade, "modulate", new Color(1, 1, 1, 0), 5);
+		tween.TweenProperty(fade, "visible", false, 0);
 	}
 
 	private void SpawnLilypads()
@@ -366,11 +374,21 @@ public partial class Game : Node2D
 	{
 		resetting = true;
 		gameCanEnd = false;
-		foreach (var lilypad in lilypads) {
-			lilypad.Reset();
-		}
-		ResetCreatures();
-		muckyLilypads.Clear();
+		fade.Visible = true;
+		var tween = fade.CreateTween()
+			.SetTrans(Tween.TransitionType.Quad);
+		tween.TweenProperty(fade, "modulate", new Color(1, 1, 1, 1), 5)
+			.SetEase(Tween.EaseType.In);
+		tween.TweenCallback(Callable.From(() => {
+			foreach (var lilypad in lilypads) {
+				lilypad.Reset();
+			}
+			ResetCreatures();
+			muckyLilypads.Clear();
+		}));
+		tween.TweenProperty(fade, "modulate", new Color(1, 1, 1, 0), 5)
+			.SetEase(Tween.EaseType.Out);
+		tween.TweenProperty(fade, "visible", false, 0);
 	}
 
 	public static SceneTreeTimer GetTimer(double timeSec, Action action)
