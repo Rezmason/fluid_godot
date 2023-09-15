@@ -125,12 +125,12 @@ public partial class Game : Node2D
 			}
 		}
 		
-		public static Lilypad GetRandomNeighbor(Lilypad lilypad, Predicate<Lilypad> pred)
+		public static Lilypad GetRandomNeighbor(Lilypad lilypad, Predicate<Lilypad> pred = null)
 		{
 			var candidates = new List<Lilypad>();
 			foreach (var neighbor in lilypad.neighbors)
 			{
-				if (pred(neighbor)) {
+				if (pred == null || pred(neighbor)) {
 					candidates.Add(neighbor);
 				}
 			}
@@ -157,6 +157,10 @@ public partial class Game : Node2D
 
 		private void Jump()
 		{
+			var tween = scene.GetTree().CreateTween();
+			var startAngle = scene.GlobalRotation;
+			scene.Rotation = startAngle;
+
 			var nextLilypad = Lilypad.GetRandomNeighbor(lilypad, neighbor => !neighbor.Occupied);
 			if (nextLilypad != null) {
 				var oldLilypad = lilypad;
@@ -164,12 +168,20 @@ public partial class Game : Node2D
 				oldLilypad.occupant = null;
 				lilypad.occupant = this;
 
+				var angleToLilypad = oldLilypad.scene.GetAngleTo(lilypad.scene.GlobalPosition);
+				if (angleToLilypad - startAngle >  Math.PI) angleToLilypad -= (float)Math.PI * 2;
+				if (angleToLilypad - startAngle < -Math.PI) angleToLilypad += (float)Math.PI * 2;
+
 				var position = scene.GlobalPosition;
 				oldLilypad.scene.RemoveChild(scene);
 				lilypad.scene.AddChild(scene);
 				scene.GlobalPosition = position;
 
-				var tween = scene.GetTree().CreateTween();
+				tween.SetParallel(true);
+
+				tween.TweenProperty(scene, "rotation", angleToLilypad, 0.1f)
+					.SetTrans(Tween.TransitionType.Quad)
+					.SetEase(Tween.EaseType.Out);
 				tween.TweenProperty(scene, "position", new Vector2(0, 0), 0.3f)
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
