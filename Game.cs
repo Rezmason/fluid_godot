@@ -384,6 +384,7 @@ public partial class Game : Node2D
 			}
 			ResetCreatures();
 			muckyLilypads.Clear();
+			resetting = false;
 		}));
 		tween.TweenProperty(fade, "modulate", new Color(1, 1, 1, 0), 5)
 			.SetEase(Tween.EaseType.Out);
