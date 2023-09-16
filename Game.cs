@@ -245,6 +245,7 @@ public partial class Game : Node2D
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
 				tween.TweenCallback(Callable.From(() => lilypad.EatAlga())).SetDelay(0.15f);
+
 			} else {
 				var someLilypadPosition = Lilypad.GetRandomNeighbor(lilypad).scene.GlobalPosition;
 				var angleToRandomLilypad = lilypad.scene.GetAngleTo(someLilypadPosition);
@@ -289,44 +290,53 @@ public partial class Game : Node2D
 	{
 		List<List<Lilypad>> grid = new List<List<Lilypad>>();
 
-		const int numRows = 9;
-		int[] numColumns = {10, 9};
+		const int numRows = 9, numColumns = 10;
 		var spacing = new Vector2(110, 90);
 		for (int i = 0; i < numRows; i++) {
-			var rowOffset = new Vector2(1 - numColumns[i % 2], 1 - numRows) / 2;
+			var rowOffset = new Vector2(1 - (numColumns - i % 2), 1 - numRows) / 2;
 			var row = new List<Lilypad>();
 			grid.Add(row);
-			for (int j = 0; j < numColumns[i % 2]; j++) {
+			for (int j = 0; j < numColumns; j++) {
+				if (i % 2 == 1 && j == numColumns - 1) {
+					row.Add(null);
+					continue;
+				}
 				var lilypad = new Lilypad();
 				lilypad.scene.Position = (new Vector2(j, i) + rowOffset) * spacing;
 				row.Add(lilypad);
 				lilypads.Add(lilypad);
 				AddChild(lilypad.scene);
-				// lilypad.label.Text = $"{i},{j}";
+				//lilypad.label.Text = $"{i},{j}";
 				lilypad.Reset();
 			}
 		}
 
 		void ConnectNeighbors(Lilypad l1, Lilypad l2) {
+			if (l1 == null || l2 == null) return;
 			l1.neighbors.Add(l2);
 			l2.neighbors.Add(l1);
 		}
 
 		for (int i = 0; i < numRows; i++) {
-			for (int j = 1; j < numColumns[i % 2]; j++) {
-				ConnectNeighbors(grid[i][j], grid[i][j - 1]);
-				if (i > 0) {
-					ConnectNeighbors(grid[i][j], grid[i - 1][j - ((i + 1) % 2)]);
+			for (int j = 0; j < numColumns; j++) {
+				var lilypad = grid[i][j];
+				if (lilypad == null) continue;
+				if (j > 0) {
+					ConnectNeighbors(lilypad, grid[i][j - 1]);
 				}
-				if (i < numRows - 1) {
-					ConnectNeighbors(grid[i][j], grid[i + 1][j - ((i + 1) % 2)]);
+				if (i > 0) {
+					ConnectNeighbors(lilypad, grid[i - 1][j]);
+					int j2 = j + (i % 2) * 2 - 1;
+					if (j2 >= 0) {
+						ConnectNeighbors(lilypad, grid[i - 1][j2]);
+					}
 				}
 			}
 		}
 
-		foreach (var lilypad in lilypads) {
-			GD.Print(lilypad.neighbors.Count);
-		}
+		//foreach (var lilypad in lilypads) {
+		//	lilypad.label.Text = lilypad.neighbors.Count.ToString();
+		//}
 	}
 
 	private void SpawnCreatures()

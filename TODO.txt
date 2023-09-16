@@ -1,6 +1,4 @@
 Coding
-
-	Leftmost nodes aren't neighbored right
 	Feeders
 		Fake floating
 		Metaballs?
