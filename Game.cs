@@ -227,8 +227,6 @@ public partial class Game : Node2D
 				oldLilypad.occupant = null;
 				lilypad.occupant = this;
 
-				lilypad.EatAlga();
-
 				var angleToLilypad = oldLilypad.scene.GetAngleTo(lilypad.scene.GlobalPosition);
 				if (angleToLilypad - startAngle >  Math.PI) angleToLilypad -= (float)Math.PI * 2;
 				if (angleToLilypad - startAngle < -Math.PI) angleToLilypad += (float)Math.PI * 2;
@@ -246,6 +244,7 @@ public partial class Game : Node2D
 				tween.TweenProperty(scene, "position", new Vector2(0, 0), 0.3f)
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
+				tween.TweenCallback(Callable.From(() => lilypad.EatAlga())).SetDelay(0.15f);
 			} else {
 				var someLilypadPosition = Lilypad.GetRandomNeighbor(lilypad).scene.GlobalPosition;
 				var angleToRandomLilypad = lilypad.scene.GetAngleTo(someLilypadPosition);
