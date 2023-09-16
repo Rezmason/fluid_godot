@@ -48,6 +48,8 @@ public partial class Game : Node2D
 
 		public bool ripe = false;
 		public bool mucky = false;
+		public Vector2 restingPosition;
+		public Vector2 goalPosition = Vector2.Zero;
 		public Creature occupant = null;
 
 		public Lilypad()
@@ -286,6 +288,32 @@ public partial class Game : Node2D
 		tween.TweenProperty(fade, "visible", false, 0);
 	}
 
+	public override void _UnhandledInput(InputEvent inputEvent)
+	{
+		if (inputEvent is InputEventMouse mouseEvent) {
+			bool isMousePressed = (mouseEvent.ButtonMask & MouseButtonMask.Left) == MouseButtonMask.Left;
+			var mousePosition = GetLocalMousePosition();
+			
+			foreach (var lilypad in lilypads) {
+				if (lilypad.mucky || !isMousePressed) {
+					lilypad.goalPosition = lilypad.restingPosition;
+				} else {
+					var localMousePosition = mousePosition - lilypad.restingPosition;
+					float offset = -localMousePosition.Length() / 50;
+					offset *= Mathf.Pow(3, offset);
+					lilypad.goalPosition = lilypad.restingPosition + localMousePosition * offset;
+				}
+			}
+		}
+	}
+
+	public override void _Process(Double delta)
+	{
+		foreach (var lilypad in lilypads) {
+			lilypad.scene.Position = lilypad.scene.Position.Lerp(lilypad.goalPosition, 0.1f);
+		}
+	}
+
 	private void SpawnLilypads()
 	{
 		List<List<Lilypad>> grid = new List<List<Lilypad>>();
@@ -302,7 +330,8 @@ public partial class Game : Node2D
 					continue;
 				}
 				var lilypad = new Lilypad();
-				lilypad.scene.Position = (new Vector2(j, i) + rowOffset) * spacing;
+				lilypad.restingPosition = (new Vector2(j, i) + rowOffset) * spacing;
+				lilypad.scene.Position = lilypad.restingPosition;
 				row.Add(lilypad);
 				lilypads.Add(lilypad);
 				AddChild(lilypad.scene);

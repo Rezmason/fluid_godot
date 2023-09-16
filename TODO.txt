@@ -1,4 +1,5 @@
 Coding
+	Push lilypads around when mouse is pressed
 	Feeders
 		Fake floating
 		Metaballs?
@@ -7,6 +8,5 @@ Coding
 		REMOVE click-on-alga logic
 		Triple feeders feed algae
 			Sum of distance squared > threshold?
-	Push lilypads around when mouse is pressed
 
 Splash screen
