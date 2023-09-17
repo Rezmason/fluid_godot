@@ -49,12 +49,16 @@ public partial class Game : Node2D
 		public bool ripe = false;
 		public bool mucky = false;
 		public Vector2 restingPosition;
-		public Vector2 goalPosition = Vector2.Zero;
+		public Vector2 goalPosition;
 		public Creature occupant = null;
 
-		public Lilypad()
+		public Lilypad(Vector2 position)
 		{
 			scene = new Node2D();
+
+			restingPosition = position;
+			goalPosition = position;
+			this.scene.Position = position;
 
 			muck = (Node2D)muckArt.Instantiate();
 			muck.Set("modulate", new Color(1, 1, 1, 0));
@@ -329,9 +333,7 @@ public partial class Game : Node2D
 					row.Add(null);
 					continue;
 				}
-				var lilypad = new Lilypad();
-				lilypad.restingPosition = (new Vector2(j, i) + rowOffset) * spacing;
-				lilypad.scene.Position = lilypad.restingPosition;
+				var lilypad = new Lilypad((new Vector2(j, i) + rowOffset) * spacing);
 				row.Add(lilypad);
 				lilypads.Add(lilypad);
 				AddChild(lilypad.scene);
