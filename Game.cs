@@ -261,10 +261,12 @@ public partial class Game : Node2D
 	
 	private class Feeder
 	{
+		const float margin = 50;
 		public Node2D scene;
 		private List<Feeder> others = new List<Feeder>();
 		private Feeder parent;
 		public Vector2 velocity = Vector2.Zero;
+		public Vector2 pushForce = Vector2.Zero;
 		
 		static PackedScene feederArt = (PackedScene)ResourceLoader.Load("res://feeder.tscn");
 		
@@ -284,6 +286,19 @@ public partial class Game : Node2D
 		{
 			others.Add(other);
 		}
+		
+		public void Update(float delta)
+		{
+			velocity += pushForce * 10 * delta;
+			scene.Position += velocity * 10 * delta;
+			velocity = velocity.Lerp(Vector2.Zero, 0.02f);
+			
+			// Avoid the edges
+			var currentRadius = 50; // TEMPORARY
+			var currentMargin = (Game.screenSize - Vector2.One * (margin + currentRadius)) / 2;
+			var goalPosition = scene.Position.Clamp(-currentMargin, currentMargin);
+			scene.Position = scene.Position.Lerp(goalPosition, 0.08f);
+		}
 	}
 
 	List<Lilypad> lilypads = new List<Lilypad>();
@@ -292,6 +307,7 @@ public partial class Game : Node2D
 
 	private static SceneTree _sceneTree;
 	public static Random random = new Random();
+	public static Vector2 screenSize;
 	private static Action<Lilypad> MuckChanged;
 	static HashSet<Lilypad> muckyLilypads = new HashSet<Lilypad>();
 	static bool gameCanEnd = false;
@@ -300,6 +316,7 @@ public partial class Game : Node2D
 
 	public override void _Ready()
 	{
+		screenSize = ((Window)GetViewport()).Size;
 		_sceneTree = GetTree();
 		MuckChanged += DetectEndgame;
 		fade = GetNode<Polygon2D>("FullscreenFade");
@@ -331,6 +348,18 @@ public partial class Game : Node2D
 					lilypad.goalPosition = lilypad.restingPosition + localMousePosition * offset;
 				}
 			}
+			
+			foreach (var feeder in feeders) {
+				if (isMousePressed) {
+					var localMousePosition = mousePosition - feeder.scene.Position;
+					var force = 2000f / localMousePosition.LengthSquared();
+					if (force > 0.05) {
+						feeder.pushForce = -localMousePosition * force;
+					}
+				} else {
+					feeder.pushForce = Vector2.Zero;
+				}
+			}
 		}
 	}
 
@@ -338,6 +367,10 @@ public partial class Game : Node2D
 	{
 		foreach (var lilypad in lilypads) {
 			lilypad.scene.Position = lilypad.scene.Position.Lerp(lilypad.goalPosition, 0.1f);
+		}
+		
+		foreach (var feeder in feeders) {
+			feeder.Update((float)delta);
 		}
 	}
 
@@ -426,8 +459,6 @@ public partial class Game : Node2D
 	
 	private void ResetFeeders()
 	{
-		var screenSize = ((Window)GetViewport()).Size;
-		
 		foreach (var feeder in feeders)
 		{
 			feeder.Reset();
