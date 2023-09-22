@@ -1,8 +1,9 @@
 Coding
 	Feeders
-		Fake floating
-		Combining logic
 		Exploding logic
+		Fake floating
+			bob
+			turn
 		REMOVE click-on-alga logic
 		Triple feeders feed algae
 			Sum of distance squared > threshold?

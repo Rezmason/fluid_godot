@@ -261,43 +261,124 @@ public partial class Game : Node2D
 	
 	private class Feeder
 	{
+		const float minDist = 80;
 		const float margin = 50;
+		public float age;
 		public Node2D scene;
-		private List<Feeder> others = new List<Feeder>();
-		private Feeder parent;
+		public Node2D art;
+		private List<Feeder> children = new List<Feeder>();
+		private List<Node2D> arts = new List<Node2D>();
+		public Feeder parent;
 		public Vector2 velocity = Vector2.Zero;
-		public Vector2 pushForce = Vector2.Zero;
+		public int Size => children.Count + 1;
 		
 		static PackedScene feederArt = (PackedScene)ResourceLoader.Load("res://feeder.tscn");
 		
 		public Feeder()
 		{
-			scene = (Node2D)feederArt.Instantiate();
+			scene = new Node2D();
+			art = (Node2D)feederArt.Instantiate();
+			scene.AddChild(art);
 		}
 		
 		public void Reset()
 		{
-			others.Clear();
+			foreach (var child in children) {
+				scene.RemoveChild(child.scene);
+			}
+			children.Clear();
+			arts.Clear();
+			arts.Add(art);
+			art.Position = Vector2.Zero;
 			parent = null;
 			velocity = Vector2.Zero;
+			age = 0;
 		}
 		
-		public void Combine(Feeder other)
+		public bool TryToCombine(Feeder other)
 		{
-			others.Add(other);
+			if (Size >= 3) return false;
+			
+			const float minDistSquared = minDist * minDist;
+			
+			var otherGlobalPosition = other.art.GlobalPosition;
+			if (art.GlobalPosition.DistanceSquaredTo(otherGlobalPosition) < minDistSquared) {
+				if (Size == 2) {
+					if (arts[1].GlobalPosition.DistanceSquaredTo(otherGlobalPosition) > minDistSquared) {
+						return false;
+					}
+				}
+				
+				children.Add(other);
+				arts.Add(other.art);
+				other.parent = this;
+				
+				var averageGlobalPosition = Vector2.Zero;
+				var artPositions = new List<Vector2>();
+				foreach (var art in arts) {
+					averageGlobalPosition += art.GlobalPosition;
+					artPositions.Add(art.GlobalPosition);
+				}
+				averageGlobalPosition /= Size;
+				
+				scene.GlobalPosition = averageGlobalPosition;
+				other.scene.GetParent().RemoveChild(other.scene);
+				scene.AddChild(other.scene);
+				other.scene.Position = Vector2.Zero;
+				
+				for (int i = 0; i < Size; i++) {
+					arts[i].GlobalPosition = artPositions[i];
+				}
+				
+				velocity = (velocity * (Size - 1) + other.velocity) / Size;
+				
+				return true;
+			} else {
+				return false;
+			}
 		}
 		
 		public void Update(float delta)
 		{
-			velocity += pushForce * 10 * delta;
-			scene.Position += velocity * 10 * delta;
+			if (parent != null) return;
+			
+			age += delta;
+			
+			var pushForce = Vector2.Zero;
+			if (Game.isMousePressed) {
+				var localPushPosition = Game.mousePosition - scene.Position;
+				var force = 2000f / localPushPosition.LengthSquared();
+				if (force > 0.05) {
+					pushForce = -localPushPosition * force;
+				}
+			}
+			
+			float mag = 10;
+			velocity += pushForce * mag * delta;
+			scene.Position += velocity * mag * delta;
 			velocity = velocity.Lerp(Vector2.Zero, 0.02f);
 			
 			// Avoid the edges
-			var currentRadius = 50; // TEMPORARY
-			var currentMargin = (Game.screenSize - Vector2.One * (margin + currentRadius)) / 2;
-			var goalPosition = scene.Position.Clamp(-currentMargin, currentMargin);
-			scene.Position = scene.Position.Lerp(goalPosition, 0.08f);
+			{
+				var currentRadius = 50;
+				var currentMargin = (Game.screenSize - Vector2.One * (margin + currentRadius)) / 2;
+				var goalPosition = scene.Position.Clamp(-currentMargin, currentMargin);
+				scene.Position = scene.Position.Lerp(goalPosition, 0.08f);
+			}
+			
+			if (Size == 2) {
+				foreach (var art in arts) {
+					var goalPosition = art.Position * (minDist / 2) / art.Position.Length();
+					art.Position = art.Position.Lerp(goalPosition, 0.1f);
+				}
+			} else if (Size == 3) {
+				var averagePosition = (arts[0].Position + arts[1].Position + arts[2].Position) / 3;
+				foreach (var art in arts) {
+					var goalPosition = art.Position - averagePosition;
+					goalPosition *= (minDist / 2) / goalPosition.Length();
+					art.Position = art.Position.Lerp(goalPosition, 0.1f);
+				}
+			}
 		}
 	}
 
@@ -308,6 +389,8 @@ public partial class Game : Node2D
 	private static SceneTree _sceneTree;
 	public static Random random = new Random();
 	public static Vector2 screenSize;
+	public static bool isMousePressed;
+	public static Vector2 mousePosition;
 	private static Action<Lilypad> MuckChanged;
 	static HashSet<Lilypad> muckyLilypads = new HashSet<Lilypad>();
 	static bool gameCanEnd = false;
@@ -335,29 +418,17 @@ public partial class Game : Node2D
 	public override void _UnhandledInput(InputEvent inputEvent)
 	{
 		if (inputEvent is InputEventMouse mouseEvent) {
-			bool isMousePressed = (mouseEvent.ButtonMask & MouseButtonMask.Left) == MouseButtonMask.Left;
-			var mousePosition = GetLocalMousePosition();
+			isMousePressed = (mouseEvent.ButtonMask & MouseButtonMask.Left) == MouseButtonMask.Left;
+			mousePosition = GetLocalMousePosition();
 			
 			foreach (var lilypad in lilypads) {
 				if (lilypad.mucky || !isMousePressed) {
 					lilypad.goalPosition = lilypad.restingPosition;
 				} else {
-					var localMousePosition = mousePosition - lilypad.restingPosition;
-					float offset = -localMousePosition.Length() / 50;
+					var localPushPosition = mousePosition - lilypad.restingPosition;
+					float offset = -localPushPosition.Length() / 50;
 					offset *= Mathf.Pow(3, offset);
-					lilypad.goalPosition = lilypad.restingPosition + localMousePosition * offset;
-				}
-			}
-			
-			foreach (var feeder in feeders) {
-				if (isMousePressed) {
-					var localMousePosition = mousePosition - feeder.scene.Position;
-					var force = 2000f / localMousePosition.LengthSquared();
-					if (force > 0.05) {
-						feeder.pushForce = -localMousePosition * force;
-					}
-				} else {
-					feeder.pushForce = Vector2.Zero;
+					lilypad.goalPosition = lilypad.restingPosition + localPushPosition * offset;
 				}
 			}
 		}
@@ -369,8 +440,23 @@ public partial class Game : Node2D
 			lilypad.scene.Position = lilypad.scene.Position.Lerp(lilypad.goalPosition, 0.1f);
 		}
 		
+		float fDelta = (float)delta;
 		foreach (var feeder in feeders) {
-			feeder.Update((float)delta);
+			feeder.Update(fDelta);
+		}
+		
+		for (int i = 0; i < feeders.Count; i++) {
+			var feeder = feeders[i];
+			if (feeder.parent != null || feeder.age < 3 || feeder.Size >= 3) continue;
+			for (int j = i + 1; j < feeders.Count; j++) {
+				var other = feeders[j];
+				if (other.parent != null || other.age < 3 || feeder.Size + other.Size > 3) continue;
+				if (feeder.Size >= other.Size) {
+					if (feeder.TryToCombine(other)) break;
+				} else {
+					if (other.TryToCombine(feeder)) break;
+				}
+			}
 		}
 	}
 
@@ -393,7 +479,6 @@ public partial class Game : Node2D
 				row.Add(lilypad);
 				lilypads.Add(lilypad);
 				AddChild(lilypad.scene);
-				//lilypad.label.Text = $"{i},{j}";
 				lilypad.Reset();
 			}
 		}
@@ -420,10 +505,6 @@ public partial class Game : Node2D
 				}
 			}
 		}
-
-		//foreach (var lilypad in lilypads) {
-		//	lilypad.label.Text = lilypad.neighbors.Count.ToString();
-		//}
 	}
 
 	private void SpawnCreatures()
@@ -441,7 +522,6 @@ public partial class Game : Node2D
 		for (int i = 0; i < numFeeders; i++) {
 			var feeder = new Feeder();
 			feeders.Add(feeder);
-			AddChild(feeder.scene);
 		}
 		ResetFeeders();
 	}
@@ -462,10 +542,15 @@ public partial class Game : Node2D
 		foreach (var feeder in feeders)
 		{
 			feeder.Reset();
+			AddChild(feeder.scene);
 			feeder.scene.GlobalPosition = new Vector2(
 				(float)random.NextDouble() - 0.5f,
 				(float)random.NextDouble() - 0.5f
 			) * screenSize;
+			feeder.velocity = new Vector2(
+				(float)random.NextDouble() - 0.5f,
+				(float)random.NextDouble() - 0.5f
+			) * 200;
 		}
 	}
 
