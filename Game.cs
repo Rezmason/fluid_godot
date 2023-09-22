@@ -37,14 +37,13 @@ public partial class Game : Node2D
 		public Node2D scene;
 		public Node2D alga;
 		public Node2D muck;
-		public Label label;
 		public HashSet<Lilypad> neighbors = new HashSet<Lilypad>();
 
 		private Clicker algaClicker;
 		private AnimationTree algaAnimationTree;
 
-		static PackedScene algaArt = (PackedScene)ResourceLoader.Load("res://alga.tscn");
-		static PackedScene muckArt = (PackedScene)ResourceLoader.Load("res://muck.tscn");
+		static PackedScene algaArt = ResourceLoader.Load<PackedScene>("res://alga.tscn");
+		static PackedScene muckArt = ResourceLoader.Load<PackedScene>("res://muck.tscn");
 
 		public bool ripe = false;
 		public bool mucky = false;
@@ -69,11 +68,6 @@ public partial class Game : Node2D
 			alga = (Node2D)algaArt.Instantiate();
 			algaAnimationTree = alga.GetNode<AnimationTree>("AnimationTree");
 			scene.AddChild(alga);
-
-			// TEMPORARY
-			label = new Label();
-			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
-			scene.AddChild(label);
 
 			// TEMPORARY
 			algaClicker = new Clicker(alga.GetNode<Area2D>("Area2D"), () => {
@@ -264,9 +258,37 @@ public partial class Game : Node2D
 			WaitToJump();
 		}
 	}
+	
+	private class Feeder
+	{
+		public Node2D scene;
+		private List<Feeder> others = new List<Feeder>();
+		private Feeder parent;
+		public Vector2 velocity = Vector2.Zero;
+		
+		static PackedScene feederArt = (PackedScene)ResourceLoader.Load("res://feeder.tscn");
+		
+		public Feeder()
+		{
+			scene = (Node2D)feederArt.Instantiate();
+		}
+		
+		public void Reset()
+		{
+			others.Clear();
+			parent = null;
+			velocity = Vector2.Zero;
+		}
+		
+		public void Combine(Feeder other)
+		{
+			others.Add(other);
+		}
+	}
 
 	List<Lilypad> lilypads = new List<Lilypad>();
 	List<Creature> creatures = new List<Creature>();
+	List<Feeder> feeders = new List<Feeder>();
 
 	private static SceneTree _sceneTree;
 	public static Random random = new Random();
@@ -284,6 +306,7 @@ public partial class Game : Node2D
 
 		SpawnLilypads();
 		SpawnCreatures();
+		SpawnFeeders();
 
 		var tween = fade.CreateTween()
 			.SetTrans(Tween.TransitionType.Quad)
@@ -378,15 +401,40 @@ public partial class Game : Node2D
 		}
 		ResetCreatures();
 	}
+	
+	private void SpawnFeeders()
+	{
+		const int numFeeders = 7;
+		for (int i = 0; i < numFeeders; i++) {
+			var feeder = new Feeder();
+			feeders.Add(feeder);
+			AddChild(feeder.scene);
+		}
+		ResetFeeders();
+	}
 
 	private void ResetCreatures()
 	{
 		foreach (var creature in creatures) {
-			var lilypad = lilypads[Game.random.Next(lilypads.Count)];
+			var lilypad = lilypads[random.Next(lilypads.Count)];
 			while (lilypad.occupant != null) {
-				lilypad = lilypads[Game.random.Next(lilypads.Count)];
+				lilypad = lilypads[random.Next(lilypads.Count)];
 			}
 			creature.Place(lilypad);
+		}
+	}
+	
+	private void ResetFeeders()
+	{
+		var screenSize = ((Window)GetViewport()).Size;
+		
+		foreach (var feeder in feeders)
+		{
+			feeder.Reset();
+			feeder.scene.GlobalPosition = new Vector2(
+				(float)random.NextDouble() - 0.5f,
+				(float)random.NextDouble() - 0.5f
+			) * screenSize;
 		}
 	}
 
@@ -424,6 +472,7 @@ public partial class Game : Node2D
 				lilypad.Reset();
 			}
 			ResetCreatures();
+			ResetFeeders();
 			muckyLilypads.Clear();
 			resetting = false;
 		}));

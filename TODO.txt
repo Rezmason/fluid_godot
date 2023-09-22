@@ -1,12 +1,12 @@
 Coding
 	Feeders
 		Fake floating
-		Metaballs?
 		Combining logic
 		Exploding logic
 		REMOVE click-on-alga logic
 		Triple feeders feed algae
 			Sum of distance squared > threshold?
+		Metaballs?
 	Give lilypads velocity
 		Jumping creatures kick their old and new lilypads away a little bit
 
