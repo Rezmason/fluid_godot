@@ -267,8 +267,6 @@ public partial class Game : Node2D
 		public Vector2 velocity = Vector2.Zero;
 		public int Size => children.Count + 1;
 		
-		public Label label;
-		
 		static PackedScene feederArt = (PackedScene)ResourceLoader.Load("res://feeder.tscn");
 		
 		public Feeder()
@@ -276,11 +274,6 @@ public partial class Game : Node2D
 			scene = new Node2D();
 			art = (Node2D)feederArt.Instantiate();
 			scene.AddChild(art);
-			
-			label = new Label();
-			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
-			label.ZIndex = 4;
-			art.AddChild(label);
 		}
 		
 		public void Reset()
@@ -392,12 +385,6 @@ public partial class Game : Node2D
 		
 		public void Update(float delta)
 		{
-			if (parent == null) {
-				label.Text = $"{Size} {availableSeeds}";
-			} else {
-				label.Text = $"-- {availableSeeds}";
-			}
-			
 			if (parent != null) return;
 			
 			age += delta;
