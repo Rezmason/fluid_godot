@@ -359,6 +359,8 @@ public partial class Game : Node2D
 			}
 			
 			children.Clear();
+			arts.Clear();
+			arts.Add(art);
 			availableSeeds = 0;
 		}
 		
@@ -512,16 +514,18 @@ public partial class Game : Node2D
 		}
 		
 		var seedingFeeders = new List<Feeder>();
+
+		const float minAge = 3;
 		
 		for (int i = 0; i < feeders.Count; i++) {
 			var feeder = feeders[i];
-			if (feeder.parent != null || feeder.age < 3) continue;
+			if (feeder.parent != null || feeder.age < minAge) continue;
 			if (feeder.Size >= 3) {
 				seedingFeeders.Add(feeder);
 			} else {
 				for (int j = i + 1; j < feeders.Count; j++) {
 					var other = feeders[j];
-					if (other.parent != null || other.age < 3 || feeder.Size + other.Size > 3) continue;
+					if (other.parent != null || other.age < minAge || feeder.Size + other.Size > 3) continue;
 					if (feeder.Size >= other.Size) {
 						if (feeder.TryToCombine(other)) break;
 					} else {
