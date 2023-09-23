@@ -192,6 +192,7 @@ public partial class Game : Node2D
 		public Node2D scene;
 		private Clicker clicker;
 		public Lilypad lilypad;
+		Tween jumpTween;
 
 		static PackedScene creatureArt = ResourceLoader.Load<PackedScene>("res://creature.tscn");
 
@@ -199,6 +200,14 @@ public partial class Game : Node2D
 		{
 			scene = (Node2D)creatureArt.Instantiate();
 			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), () => lilypad.SpreadMuck());
+		}
+
+		public void Reset()
+		{
+			if (jumpTween != null) {
+				jumpTween.Stop();
+				jumpTween = null;
+			}
 		}
 
 		public void Place(Lilypad lilypad)
@@ -212,12 +221,12 @@ public partial class Game : Node2D
 
 		private void WaitToJump()
 		{
-			GetTimer(Game.random.NextDouble() * 2 + 0.5, Jump);
+			GetTimer(Game.random.NextDouble() * 2 + 1, Jump);
 		}
 
 		private void Jump()
 		{
-			var tween = scene.CreateTween();
+			jumpTween = scene.CreateTween();
 			var startAngle = scene.GlobalRotation;
 			scene.Rotation = startAngle;
 
@@ -242,15 +251,15 @@ public partial class Game : Node2D
 				lilypad.scene.AddChild(scene);
 				scene.GlobalPosition = position;
 
-				tween.SetParallel(true);
+				jumpTween.SetParallel(true);
 
-				tween.TweenProperty(scene, "rotation", angleToLilypad, 0.1f)
+				jumpTween.TweenProperty(scene, "rotation", angleToLilypad, 0.1f)
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
-				tween.TweenProperty(scene, "position", new Vector2(0, 0), 0.3f)
+				jumpTween.TweenProperty(scene, "position", new Vector2(0, 0), 0.3f)
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
-				tween.TweenCallback(Callable.From(() => {
+				jumpTween.TweenCallback(Callable.From(() => {
 					if (lilypad.ripe && lilypad.occupant == this) lilypad.EatAlga();
 				})).SetDelay(0.15f);
 
@@ -259,7 +268,7 @@ public partial class Game : Node2D
 				var angleToRandomLilypad = lilypad.scene.GetAngleTo(someLilypadPosition);
 				if (angleToRandomLilypad - startAngle >  Math.PI) angleToRandomLilypad -= (float)Math.PI * 2;
 				if (angleToRandomLilypad - startAngle < -Math.PI) angleToRandomLilypad += (float)Math.PI * 2;
-				tween.TweenProperty(scene, "rotation", angleToRandomLilypad, 0.3f)
+				jumpTween.TweenProperty(scene, "rotation", angleToRandomLilypad, 0.3f)
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
 			}
@@ -429,14 +438,14 @@ public partial class Game : Node2D
 			if (Size == 2) {
 				foreach (var art in arts) {
 					var goalPosition = art.Position * (minDist / 2) / art.Position.Length();
-					art.Position = art.Position.Lerp(goalPosition, 0.1f);
+					art.Position = art.Position.Lerp(goalPosition, 0.2f);
 				}
 			} else if (Size == 3) {
 				var averagePosition = (arts[0].Position + arts[1].Position + arts[2].Position) / 3;
 				foreach (var art in arts) {
 					var goalPosition = art.Position - averagePosition;
 					goalPosition *= (minDist / 2) / goalPosition.Length();
-					art.Position = art.Position.Lerp(goalPosition, 0.1f);
+					art.Position = art.Position.Lerp(goalPosition, 0.2f);
 				}
 			}
 		}
@@ -605,6 +614,7 @@ public partial class Game : Node2D
 			while (lilypad.occupant != null) {
 				lilypad = lilypads[random.Next(lilypads.Count)];
 			}
+			creature.Reset();
 			creature.Place(lilypad);
 		}
 	}

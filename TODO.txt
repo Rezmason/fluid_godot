@@ -1,3 +1,7 @@
+BUGS
+	Triples disappeared off the screen somehow
+		that's bad, that's really bad.
+
 Coding
 	Feeders
 		Desaturate or something as you run out of seeds and explode
