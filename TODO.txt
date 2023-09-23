@@ -1,6 +1,5 @@
 Coding
 	Feeders
-		Desaturate or something as you run out of seeds and explode
 		Tumbling with rotation
 		Fake bobbing
 		Fake brownian motion

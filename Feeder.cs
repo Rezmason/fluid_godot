@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 public class Feeder
 {
-	private Color minSeedColor = new Color();
-	private Color maxSeedColor = new Color(1f, 0f, 0f);
+	private Color minSeedColor = Colors.Transparent;
+	private Color maxSeedColor = Colors.White;
 	
 	const int maxAvailableSeeds = 40;
 	const float minSeedDist = 100;
@@ -15,11 +15,13 @@ public class Feeder
 	public float availableSeeds;
 	public Node2D scene;
 	public Node2D art;
+	public Node2D fill;
 	private List<Feeder> children = new List<Feeder>();
 	private List<Feeder> elements = new List<Feeder>();
 	public Feeder parent;
 	public Vector2 velocity = Vector2.Zero;
 	public int Size => elements.Count;
+	private Tween opacityTween;
 	
 	static PackedScene feederArt = ResourceLoader.Load<PackedScene>("res://feeder.tscn");
 	
@@ -28,6 +30,7 @@ public class Feeder
 		scene = new Node2D();
 		art = (Node2D)feederArt.Instantiate();
 		scene.AddChild(art);
+		fill = art.GetNode<Node2D>("Fill");
 	}
 	
 	public void Reset()
@@ -45,7 +48,11 @@ public class Feeder
 		age = 0;
 		availableSeeds = 0;
 
-		// TODO: reset the modulation of the feeder art and stop the tween
+		if (opacityTween != null) {
+			opacityTween.Stop();
+			opacityTween = null;
+		}
+		fill.Set("modulate", maxSeedColor);
 	}
 	
 	public bool TryToSeed(Alga alga)
@@ -103,14 +110,12 @@ public class Feeder
 	}
 	
 	public void AnimateOpacity(float amount) {
-		var clampedAmount = Math.Clamp(amount, 0.3f, 1f);
-		var targetColor = minSeedColor.Lerp(maxSeedColor, clampedAmount);
-		
-		var tween = art.CreateTween()
+		opacityTween = art.CreateTween()
 			.SetTrans(Tween.TransitionType.Quad)
 			.SetEase(Tween.EaseType.Out);
 		
-		tween.TweenProperty(art, "modulate", targetColor, 1);
+		var targetColor = minSeedColor.Lerp(maxSeedColor, amount);
+		opacityTween.TweenProperty(fill, "modulate", targetColor, 0.1f);
 	}
 	
 	public bool TryToCombine(Feeder other)
