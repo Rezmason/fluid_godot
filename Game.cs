@@ -50,6 +50,9 @@ public partial class Game : Node2D
 		public Vector2 goalPosition;
 		public Creature occupant = null;
 
+		private Tween muckTween;
+		private Tween algaTween;
+
 		public Lilypad(Vector2 position)
 		{
 			scene = new Node2D();
@@ -78,6 +81,16 @@ public partial class Game : Node2D
 				occupant = null;
 			}
 
+			if (muckTween != null) {
+				muckTween.Stop();
+				muckTween = null;
+			}
+
+			if (algaTween != null) {
+				algaTween.Stop();
+				algaTween = null;
+			}
+
 			muck.Visible = false;
 			muck.Position = Vector2.Zero;
 			muck.Modulate = new Color("white");
@@ -89,23 +102,23 @@ public partial class Game : Node2D
 		private void AnimateMuck()
 		{
 			muck.Visible = true;
-			var tween = muck.CreateTween().SetParallel(true)
+			muckTween = muck.CreateTween().SetParallel(true)
 				.SetTrans(Tween.TransitionType.Quad)
 				.SetEase(Tween.EaseType.Out);
 			var duration = 0.3f;
 			float isHere = mucky ? 1 : 0;
-			tween.TweenProperty(muck, "position", new Vector2(0, 0), duration);
-			tween.TweenProperty(muck, "scale", new Vector2(isHere, isHere), duration);
-			tween.TweenProperty(muck, "modulate", new Color(1, 1, 1, isHere), duration);
-			tween.TweenProperty(muck, "visible", mucky, duration);
+			muckTween.TweenProperty(muck, "position", new Vector2(0, 0), duration);
+			muckTween.TweenProperty(muck, "scale", new Vector2(isHere, isHere), duration);
+			muckTween.TweenProperty(muck, "modulate", new Color(1, 1, 1, isHere), duration);
+			muckTween.TweenProperty(muck, "visible", mucky, duration);
 		}
 
 		public bool Occupied => occupant != null;
 
 		private void AnimateAlga()
 		{
-			var tween = alga.CreateTween();
-			tween.TweenProperty(algaAnimationTree, "parameters/AlgaBlend/blend_position",
+			algaTween = alga.CreateTween();
+			algaTween.TweenProperty(algaAnimationTree, "parameters/AlgaBlend/blend_position",
 				new Vector2(
 					mucky ? 1 : 0,
 					ripe ? 1 : 0
@@ -180,7 +193,7 @@ public partial class Game : Node2D
 		private Clicker clicker;
 		public Lilypad lilypad;
 
-		static PackedScene creatureArt = (PackedScene)ResourceLoader.Load("res://creature.tscn");
+		static PackedScene creatureArt = ResourceLoader.Load<PackedScene>("res://creature.tscn");
 
 		public Creature()
 		{
@@ -237,7 +250,9 @@ public partial class Game : Node2D
 				tween.TweenProperty(scene, "position", new Vector2(0, 0), 0.3f)
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
-				tween.TweenCallback(Callable.From(() => lilypad.EatAlga())).SetDelay(0.15f);
+				tween.TweenCallback(Callable.From(() => {
+					if (lilypad.ripe && lilypad.occupant == this) lilypad.EatAlga();
+				})).SetDelay(0.15f);
 
 			} else {
 				var someLilypadPosition = Lilypad.GetRandomNeighbor(lilypad).scene.GlobalPosition;
@@ -267,7 +282,7 @@ public partial class Game : Node2D
 		public Vector2 velocity = Vector2.Zero;
 		public int Size => children.Count + 1;
 		
-		static PackedScene feederArt = (PackedScene)ResourceLoader.Load("res://feeder.tscn");
+		static PackedScene feederArt = ResourceLoader.Load<PackedScene>("res://feeder.tscn");
 		
 		public Feeder()
 		{
@@ -613,6 +628,8 @@ public partial class Game : Node2D
 
 	private void DetectEndgame(Lilypad lilypad)
 	{
+		if (resetting) return;
+
 		if (lilypad.mucky) {
 			muckyLilypads.Add(lilypad);
 		} else {
