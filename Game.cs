@@ -221,7 +221,7 @@ public partial class Game : Node2D
 
 		private void WaitToJump()
 		{
-			GetTimer(Game.random.NextDouble() * 2 + 1, Jump);
+			GetTimer(Game.random.NextDouble() * 1.5f + 0.5f, Jump);
 		}
 
 		private void Jump()
@@ -398,6 +398,7 @@ public partial class Game : Node2D
 				}
 				
 				velocity = (velocity * (Size - 1) + other.velocity) / Size;
+				other.velocity = Vector2.Zero;
 				
 				if (Size == 3) availableSeeds = 40;
 				

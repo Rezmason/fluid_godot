@@ -6,10 +6,10 @@ Coding
 	Feeders
 		Desaturate or something as you run out of seeds and explode
 		Tumbling with rotation
-		Fake floating
-			bob
-			turn
+		Fake bobbing
+		Fake brownian motion
 		Metaballs?
+			Fullscreen shader
 	Give lilypads velocity
 		Jumping creatures kick their old and new lilypads away a little bit
 
