@@ -39,7 +39,6 @@ public partial class Game : Node2D
 		public Node2D muck;
 		public HashSet<Lilypad> neighbors = new HashSet<Lilypad>();
 
-		private Clicker algaClicker;
 		private AnimationTree algaAnimationTree;
 
 		static PackedScene algaArt = ResourceLoader.Load<PackedScene>("res://alga.tscn");
@@ -68,12 +67,6 @@ public partial class Game : Node2D
 			alga = (Node2D)algaArt.Instantiate();
 			algaAnimationTree = alga.GetNode<AnimationTree>("AnimationTree");
 			scene.AddChild(alga);
-
-			// TEMPORARY
-			algaClicker = new Clicker(alga.GetNode<Area2D>("Area2D"), () => {
-				RipenAlga();
-				if (mucky) SpreadMuck();
-			});
 		}
 
 		public void Reset()
@@ -261,9 +254,11 @@ public partial class Game : Node2D
 	
 	private class Feeder
 	{
+		const float minSeedDist = 100;
 		const float minDist = 80;
 		const float margin = 50;
 		public float age;
+		public float availableSeeds;
 		public Node2D scene;
 		public Node2D art;
 		private List<Feeder> children = new List<Feeder>();
@@ -272,6 +267,8 @@ public partial class Game : Node2D
 		public Vector2 velocity = Vector2.Zero;
 		public int Size => children.Count + 1;
 		
+		public Label label;
+		
 		static PackedScene feederArt = (PackedScene)ResourceLoader.Load("res://feeder.tscn");
 		
 		public Feeder()
@@ -279,12 +276,18 @@ public partial class Game : Node2D
 			scene = new Node2D();
 			art = (Node2D)feederArt.Instantiate();
 			scene.AddChild(art);
+			
+			label = new Label();
+			label.LabelSettings = new LabelSettings{FontColor = new Color("black")};
+			label.ZIndex = 4;
+			art.AddChild(label);
 		}
 		
 		public void Reset()
 		{
 			foreach (var child in children) {
 				scene.RemoveChild(child.scene);
+				child.parent = null;
 			}
 			children.Clear();
 			arts.Clear();
@@ -293,6 +296,53 @@ public partial class Game : Node2D
 			parent = null;
 			velocity = Vector2.Zero;
 			age = 0;
+			availableSeeds = 0;
+		}
+		
+		public bool TryToSeed(Lilypad lilypad)
+		{
+			if (Size < 3 || availableSeeds <= 0) return false;
+			var minSeedDistSquared = minSeedDist * minSeedDist;
+			if (scene.GlobalPosition.DistanceSquaredTo(lilypad.scene.GlobalPosition) < minSeedDistSquared) {
+				lilypad.RipenAlga();
+				// TODO: grow transparent
+				availableSeeds--;
+				if (availableSeeds <= 0) Burst();
+				return true;
+			}
+			return false;
+		}
+		
+		private void Burst()
+		{
+			const float burstPower = 6;
+			var oldPosition = scene.GlobalPosition;
+			var artPositions = new List<Vector2>();
+			foreach (var art in arts) {
+				artPositions.Add(art.GlobalPosition);
+				// TODO: reset transparency
+			}
+			
+			scene.GlobalPosition = artPositions[0];
+			velocity = (artPositions[0] - oldPosition) * burstPower;
+			age = 0;
+			
+			var parentNode = scene.GetParent();
+			for (int i = 1; i < 3; i++) {
+				var child = children[i - 1];
+				scene.RemoveChild(child.scene);
+				parentNode.AddChild(child.scene);
+				child.parent = null;
+				child.scene.GlobalPosition = artPositions[i];
+				child.velocity = (artPositions[i] - oldPosition) * burstPower;
+			}
+			
+			foreach (var art in arts) {
+				art.Position = Vector2.Zero;
+			}
+			
+			children.Clear();
+			availableSeeds = 0;
 		}
 		
 		public bool TryToCombine(Feeder other)
@@ -300,7 +350,6 @@ public partial class Game : Node2D
 			if (Size >= 3) return false;
 			
 			const float minDistSquared = minDist * minDist;
-			
 			var otherGlobalPosition = other.art.GlobalPosition;
 			if (art.GlobalPosition.DistanceSquaredTo(otherGlobalPosition) < minDistSquared) {
 				if (Size == 2) {
@@ -312,6 +361,7 @@ public partial class Game : Node2D
 				children.Add(other);
 				arts.Add(other.art);
 				other.parent = this;
+				other.age = 0;
 				
 				var averageGlobalPosition = Vector2.Zero;
 				var artPositions = new List<Vector2>();
@@ -332,6 +382,8 @@ public partial class Game : Node2D
 				
 				velocity = (velocity * (Size - 1) + other.velocity) / Size;
 				
+				if (Size == 3) availableSeeds = 40;
+				
 				return true;
 			} else {
 				return false;
@@ -340,6 +392,12 @@ public partial class Game : Node2D
 		
 		public void Update(float delta)
 		{
+			if (parent == null) {
+				label.Text = $"{Size} {availableSeeds}";
+			} else {
+				label.Text = $"-- {availableSeeds}";
+			}
+			
 			if (parent != null) return;
 			
 			age += delta;
@@ -435,27 +493,39 @@ public partial class Game : Node2D
 	}
 
 	public override void _Process(Double delta)
-	{
-		foreach (var lilypad in lilypads) {
-			lilypad.scene.Position = lilypad.scene.Position.Lerp(lilypad.goalPosition, 0.1f);
-		}
-		
+	{	
 		float fDelta = (float)delta;
 		foreach (var feeder in feeders) {
 			feeder.Update(fDelta);
 		}
 		
+		var seedingFeeders = new List<Feeder>();
+		
 		for (int i = 0; i < feeders.Count; i++) {
 			var feeder = feeders[i];
-			if (feeder.parent != null || feeder.age < 3 || feeder.Size >= 3) continue;
-			for (int j = i + 1; j < feeders.Count; j++) {
-				var other = feeders[j];
-				if (other.parent != null || other.age < 3 || feeder.Size + other.Size > 3) continue;
-				if (feeder.Size >= other.Size) {
-					if (feeder.TryToCombine(other)) break;
-				} else {
-					if (other.TryToCombine(feeder)) break;
+			if (feeder.parent != null || feeder.age < 3) continue;
+			if (feeder.Size >= 3) {
+				seedingFeeders.Add(feeder);
+			} else {
+				for (int j = i + 1; j < feeders.Count; j++) {
+					var other = feeders[j];
+					if (other.parent != null || other.age < 3 || feeder.Size + other.Size > 3) continue;
+					if (feeder.Size >= other.Size) {
+						if (feeder.TryToCombine(other)) break;
+					} else {
+						if (other.TryToCombine(feeder)) break;
+					}
 				}
+			}
+		}
+		
+		foreach (var lilypad in lilypads) {
+			lilypad.scene.Position = lilypad.scene.Position.Lerp(lilypad.goalPosition, 0.1f);
+			
+			if (lilypad.ripe || lilypad.occupant != null) continue;
+			
+			foreach (var feeder in seedingFeeders) {
+				if (feeder.Size == 3 && feeder.TryToSeed(lilypad)) break;
 			}
 		}
 	}
