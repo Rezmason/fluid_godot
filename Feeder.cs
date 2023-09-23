@@ -1,8 +1,12 @@
+using System;
 using Godot;
 using System.Collections.Generic;
 
 public class Feeder
 {
+	private Color minSeedColor = new Color();
+	private Color maxSeedColor = new Color(1f, 0f, 0f);
+	
 	const int maxAvailableSeeds = 40;
 	const float minSeedDist = 100;
 	const float minDist = 80;
@@ -99,7 +103,14 @@ public class Feeder
 	}
 	
 	public void AnimateOpacity(float amount) {
-		// TODO: tween the modulation of the feeder art
+		var clampedAmount = Math.Clamp(amount, 0.3f, 1f);
+		var targetColor = minSeedColor.Lerp(maxSeedColor, clampedAmount);
+		
+		var tween = art.CreateTween()
+			.SetTrans(Tween.TransitionType.Quad)
+			.SetEase(Tween.EaseType.Out);
+		
+		tween.TweenProperty(art, "modulate", targetColor, 1);
 	}
 	
 	public bool TryToCombine(Feeder other)

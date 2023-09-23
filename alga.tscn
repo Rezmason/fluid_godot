@@ -151,6 +151,7 @@ transitions = ["Start", "FruitBlend", SubResource("AnimationNodeStateMachineTran
 graph_offset = Vector2(-185.33, -41.918)
 
 [node name="Alga" type="Node2D"]
+self_modulate = Color(0.996078, 0.882353, 0.886275, 1)
 
 [node name="Muck" type="Polygon2D" parent="."]
 color = Color(0.752941, 0.752941, 0.752941, 1)
