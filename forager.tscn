@@ -46,10 +46,10 @@ nodes/breathe/node = SubResource("AnimationNodeAnimation_vif41")
 nodes/breathe/position = Vector2(100, 140)
 node_connections = [&"output", 0, &"breathe"]
 
-[node name="Creature" type="Node2D"]
+[node name="Forager" type="Node2D"]
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-root_node = NodePath("../Creature")
+root_node = NodePath("../Forager")
 autoplay = "breathe"
 libraries = {
 "": SubResource("AnimationLibrary_s6012")
@@ -59,7 +59,7 @@ libraries = {
 tree_root = SubResource("AnimationNodeBlendTree_ukhe6")
 anim_player = NodePath("../AnimationPlayer")
 
-[node name="Creature" type="Polygon2D" parent="."]
+[node name="Forager" type="Polygon2D" parent="."]
 z_index = 2
 color = Color(0.831373, 0.65098, 0.447059, 1)
 offset = Vector2(-38, 0)

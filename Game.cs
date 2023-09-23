@@ -48,7 +48,7 @@ public partial class Game : Node2D
 		public bool mucky = false;
 		public Vector2 restingPosition;
 		public Vector2 goalPosition;
-		public Creature occupant = null;
+		public Forager occupant = null;
 
 		private Tween muckTween;
 		private Tween algaTween;
@@ -160,11 +160,11 @@ public partial class Game : Node2D
 		{
 			var cleanNeighbor = Lilypad.GetRandomNeighbor(this, neighbor => !neighbor.mucky);
 			if (cleanNeighbor != null) {
-				cleanNeighbor.GetMuckFrom(scene.GlobalPosition);
+				cleanNeighbor.ReceiveMuckFrom(scene.GlobalPosition);
 			}
 		}
 
-		private void GetMuckFrom(Vector2 origin)
+		private void ReceiveMuckFrom(Vector2 origin)
 		{
 			mucky = true;
 			muck.GlobalPosition = origin;
@@ -188,17 +188,17 @@ public partial class Game : Node2D
 		}
 	}
 
-	private class Creature {
+	private class Forager {
 		public Node2D scene;
 		private Clicker clicker;
 		public Lilypad lilypad;
 		Tween jumpTween;
 
-		static PackedScene creatureArt = ResourceLoader.Load<PackedScene>("res://creature.tscn");
+		static PackedScene foragerArt = ResourceLoader.Load<PackedScene>("res://forager.tscn");
 
-		public Creature()
+		public Forager()
 		{
-			scene = (Node2D)creatureArt.Instantiate();
+			scene = (Node2D)foragerArt.Instantiate();
 			clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), () => lilypad.SpreadMuck());
 		}
 
@@ -315,6 +315,8 @@ public partial class Game : Node2D
 			velocity = Vector2.Zero;
 			age = 0;
 			availableSeeds = 0;
+
+			// TODO: reset the modulation of the feeder art and stop the tween
 		}
 		
 		public bool TryToSeed(Lilypad lilypad)
@@ -331,8 +333,7 @@ public partial class Game : Node2D
 				Burst();
 			} else {
 				foreach (var feeder in elements) {
-					var art = feeder.art;
-					// TODO: tween art transparency do availableSeeds / maxAvailableSeeds
+					feeder.AnimateOpacity(availableSeeds / maxAvailableSeeds);
 				}
 			}
 			return true;
@@ -359,14 +360,21 @@ public partial class Game : Node2D
 				feeder.age = 0;
 				feeder.scene.GlobalPosition = artPositions[i];
 				feeder.velocity = (artPositions[i] - oldPosition) * 6;
-				var art = feeder.art;
-				art.Position = Vector2.Zero;
-				// TODO: tween art transparency to one
+				feeder.art.Position = Vector2.Zero;
 			}
+			
+			foreach (var feeder in elements) {
+				feeder.AnimateOpacity(1);
+			}
+			
 			elements.Clear();
 			elements.Add(this);
 			
 			availableSeeds = 0;
+		}
+		
+		public void AnimateOpacity(float amount) {
+			// TODO: tween the modulation of the feeder art
 		}
 		
 		public bool TryToCombine(Feeder other)
@@ -463,7 +471,7 @@ public partial class Game : Node2D
 	}
 
 	List<Lilypad> lilypads = new List<Lilypad>();
-	List<Creature> creatures = new List<Creature>();
+	List<Forager> foragers = new List<Forager>();
 	List<Feeder> feeders = new List<Feeder>();
 
 	private static SceneTree _sceneTree;
@@ -485,7 +493,7 @@ public partial class Game : Node2D
 		fade = GetNode<Polygon2D>("FullscreenFade");
 
 		SpawnLilypads();
-		SpawnCreatures();
+		SpawnForagers();
 		SpawnFeeders();
 
 		var tween = fade.CreateTween()
@@ -601,13 +609,13 @@ public partial class Game : Node2D
 		}
 	}
 
-	private void SpawnCreatures()
+	private void SpawnForagers()
 	{
-		const int numCreatures = 2;
-		for (int i = 0; i < numCreatures; i++) {
-			creatures.Add(new Creature());
+		const int numForagers = 2;
+		for (int i = 0; i < numForagers; i++) {
+			foragers.Add(new Forager());
 		}
-		ResetCreatures();
+		ResetForagers();
 	}
 	
 	private void SpawnFeeders()
@@ -620,15 +628,15 @@ public partial class Game : Node2D
 		ResetFeeders();
 	}
 
-	private void ResetCreatures()
+	private void ResetForagers()
 	{
-		foreach (var creature in creatures) {
+		foreach (var forager in foragers) {
 			var lilypad = lilypads[random.Next(lilypads.Count)];
 			while (lilypad.occupant != null) {
 				lilypad = lilypads[random.Next(lilypads.Count)];
 			}
-			creature.Reset();
-			creature.Place(lilypad);
+			forager.Reset();
+			forager.Place(lilypad);
 		}
 	}
 	
@@ -684,7 +692,7 @@ public partial class Game : Node2D
 			foreach (var lilypad in lilypads) {
 				lilypad.Reset();
 			}
-			ResetCreatures();
+			ResetForagers();
 			ResetFeeders();
 			muckyLilypads.Clear();
 			resetting = false;

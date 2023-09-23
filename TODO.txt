@@ -7,7 +7,7 @@ Coding
 		Metaballs?
 			Fullscreen shader
 	Give lilypads velocity
-		Jumping creatures kick their old and new lilypads away a little bit
+		Jumping foragers kick their old and new lilypads away a little bit
 
 Godot SVG instead of vector graphics?
 Splash screen
