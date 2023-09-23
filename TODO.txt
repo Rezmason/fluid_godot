@@ -1,6 +1,5 @@
 Coding
 	Feeders
-		Tumbling with rotation
 		Fake bobbing
 		Fake brownian motion
 		Metaballs?

@@ -153,6 +153,7 @@ public class Feeder
 		other.scene.GetParent().RemoveChild(other.scene);
 		scene.AddChild(other.scene);
 		other.scene.Position = Vector2.Zero;
+		other.scene.Rotation = 0;
 
 		for (int i = 0; i < Size; i++) {
 			elements[i].art.GlobalPosition = artPositions[i];
@@ -166,6 +167,8 @@ public class Feeder
 		if (parent != null) return;
 		
 		age += delta;
+
+		var oldPosition = scene.Position;
 		
 		var pushForce = Vector2.Zero;
 		if (Globals.isMousePressed) {
@@ -188,6 +191,8 @@ public class Feeder
 			var goalPosition = scene.Position.Clamp(-currentMargin, currentMargin);
 			scene.Position = scene.Position.Lerp(goalPosition, 0.08f);
 		}
+
+		scene.GlobalRotation += ((oldPosition.X + oldPosition.Y) - (scene.Position.X + scene.Position.Y)) / Size * 0.005f;
 		
 		if (Size == 2) {
 			foreach (var feeder in elements) {
