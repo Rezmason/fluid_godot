@@ -8,20 +8,29 @@ public partial class Game : Node2D
 	bool gameCanEnd = false;
 	bool resetting = false;
 	Node2D fade;
+	ShaderMaterial feederMetaballs;
 
 	List<Alga> algae = new List<Alga>();
 	List<Forager> foragers = new List<Forager>();
 	List<Feeder> feeders = new List<Feeder>();
+
+	Color[] metaballData = new Color[10];
 
 	public override void _Ready()
 	{
 		Globals.Init(this);
 		Globals.MuckChanged += DetectEndgame;
 		fade = GetNode<Polygon2D>("FullscreenFade");
+		feederMetaballs = (ShaderMaterial)GetNode<CanvasItem>("FeederMetaballs").Material;
 
 		SpawnAlgae();
 		SpawnForagers();
 		SpawnFeeders();
+
+		var emptyColor = new Color(Colors.Black, 0);
+		for (int i = 0; i < 10; i++) {
+			metaballData[i] = emptyColor;
+		}
 
 		var tween = fade.CreateTween()
 			.SetTrans(Tween.TransitionType.Quad)
@@ -77,6 +86,20 @@ public partial class Game : Node2D
 				}
 			}
 		}
+
+		int n = 0;
+		foreach (var feeder in feeders) {
+			if (feeder.parent != null) continue;
+			float opacity = 1;
+			if (feeder.availableSeeds > 0) opacity =  feeder.availableSeeds / Feeder.maxAvailableSeeds;
+			foreach (var element in feeder.elements) {
+				var position = element.art.GlobalPosition;
+				metaballData[n] = new Color(position.X, position.Y, 10, opacity);
+				n++;
+			}
+		}
+
+		feederMetaballs.SetShaderParameter("metaballs", metaballData);
 		
 		foreach (var alga in algae) {
 			alga.scene.Position = alga.scene.Position.Lerp(alga.goalPosition, 0.1f);

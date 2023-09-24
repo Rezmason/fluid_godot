@@ -7,7 +7,7 @@ public class Feeder
 	private Color minSeedColor = Colors.Transparent;
 	private Color maxSeedColor = Colors.White;
 	
-	const int maxAvailableSeeds = 40;
+	public const int maxAvailableSeeds = 40;
 	const float minSeedDist = 100;
 	const float minDist = 80;
 	const float margin = 50;
@@ -17,7 +17,7 @@ public class Feeder
 	public Node2D art;
 	public Node2D fill;
 	private List<Feeder> children = new List<Feeder>();
-	private List<Feeder> elements = new List<Feeder>();
+	public List<Feeder> elements = new List<Feeder>();
 	public Feeder parent;
 	public Vector2 velocity = Vector2.Zero;
 	public int Size => elements.Count;
