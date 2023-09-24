@@ -4,16 +4,20 @@ using System;
 public class Forager
 {
 	public Node2D scene;
+	public Node2D art;
 	private Clicker clicker;
 	public Alga alga;
 	Tween jumpTween;
 
 	static PackedScene foragerArt = ResourceLoader.Load<PackedScene>("res://forager.tscn");
 
-	public Forager()
+	public Forager(int id)
 	{
-		scene = (Node2D)foragerArt.Instantiate();
-		clicker = new Clicker(scene.GetNode<Area2D>("Area2D"), () => alga.SpreadMuck());
+		scene = new Node2D();
+		scene.Name = $"Forager{id}";
+		art = (Node2D)foragerArt.Instantiate();
+		scene.AddChild(art);
+		clicker = new Clicker(art.GetNode<Area2D>("Area2D"), () => alga.SpreadMuck());
 	}
 
 	public void Reset()

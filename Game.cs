@@ -121,18 +121,18 @@ public partial class Game : Node2D
 		for (int i = 0; i < numRows; i++) {
 			var rowOffset = new Vector2(1 - (numColumns - i % 2), 1 - numRows) / 2;
 			var row = new List<Alga>();
-			grid.Add(row);
 			for (int j = 0; j < numColumns; j++) {
 				if (i % 2 == 1 && j == numColumns - 1) {
 					row.Add(null);
 					continue;
 				}
-				var alga = new Alga((new Vector2(j, i) + rowOffset) * spacing);
+				var alga = new Alga(grid.Count, row.Count, (new Vector2(j, i) + rowOffset) * spacing);
 				row.Add(alga);
 				algae.Add(alga);
 				AddChild(alga.scene);
 				alga.Reset();
 			}
+			grid.Add(row);
 		}
 
 		void ConnectNeighbors(Alga l1, Alga l2) {
@@ -163,7 +163,7 @@ public partial class Game : Node2D
 	{
 		const int numForagers = 2;
 		for (int i = 0; i < numForagers; i++) {
-			foragers.Add(new Forager());
+			foragers.Add(new Forager(foragers.Count));
 		}
 		ResetForagers();
 	}
@@ -172,7 +172,7 @@ public partial class Game : Node2D
 	{
 		const int numFeeders = 7;
 		for (int i = 0; i < numFeeders; i++) {
-			var feeder = new Feeder();
+			var feeder = new Feeder(feeders.Count);
 			feeders.Add(feeder);
 		}
 		ResetFeeders();

@@ -25,9 +25,10 @@ public class Feeder
 	
 	static PackedScene feederArt = ResourceLoader.Load<PackedScene>("res://feeder.tscn");
 	
-	public Feeder()
+	public Feeder(int id)
 	{
 		scene = new Node2D();
+		scene.Name = $"Feeder{id}";
 		art = (Node2D)feederArt.Instantiate();
 		scene.AddChild(art);
 		fill = art.GetNode<Node2D>("Fill");

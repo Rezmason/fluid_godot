@@ -22,9 +22,10 @@ public class Alga
 	private Tween muckTween;
 	private Tween fruitTween;
 
-	public Alga(Vector2 position)
+	public Alga(int row, int column, Vector2 position)
 	{
 		scene = new Node2D();
+		scene.Name = $"Alga{row}_{column}";
 
 		restingPosition = position;
 		goalPosition = position;
