@@ -79,6 +79,7 @@ public class Forager
 				.SetEase(Tween.EaseType.Out);
 			jumpTween.TweenCallback(Callable.From(() => {
 				if (alga.ripe && alga.occupant == this) alga.Eat();
+				WaitToJump();
 			})).SetDelay(0.15f);
 
 		} else {
@@ -89,7 +90,9 @@ public class Forager
 			jumpTween.TweenProperty(scene, "rotation", angleToRandomAlga, 0.3f)
 				.SetTrans(Tween.TransitionType.Quad)
 				.SetEase(Tween.EaseType.Out);
+			jumpTween.TweenCallback(Callable.From(() => {
+				WaitToJump();
+			})).SetDelay(0.3f);
 		}
-		WaitToJump();
 	}
 }
