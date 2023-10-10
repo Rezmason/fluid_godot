@@ -1,8 +1,7 @@
 Coding
-	Feeder metaballs
-		Figure out a way to outline some of them
-			Three metaball groups, each with their own sum and opacity
-				Find the max and smoothstep
+	Three feeder metaball groups in shader
+		Each with their own sum and opacity
+		Find the max and smoothstep
 
 	Feeders
 		Fake bobbing
