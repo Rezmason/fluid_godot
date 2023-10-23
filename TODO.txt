@@ -1,7 +1,4 @@
 Coding
-	Feeders
-		Fake bobbing
-		Fake brownian motion
 	Give lilypads velocity
 		Jumping foragers kick their old and new lilypads away a little bit
 

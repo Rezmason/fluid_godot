@@ -6,7 +6,8 @@ public class Feeder
 {
 	private Color minSeedColor = Colors.Transparent;
 	private Color maxSeedColor = Colors.White;
-	
+	private Vector2 bobDirection = Vector2.FromAngle((float)Math.PI * 0.16f);
+
 	public const int maxAvailableSeeds = 40;
 	const float minSeedDist = 100;
 	const float minDist = 80;
@@ -187,8 +188,10 @@ public class Feeder
 		
 		float mag = 10;
 		velocity += pushForce * mag * delta;
-		scene.Position += velocity * mag * delta;
-		velocity = velocity.Lerp(Vector2.Zero, 0.02f);
+		float bobVelocity = (float)Mathf.Sin((scene.Position.X + scene.Position.Y) * 0.006f + (double)Time.GetTicksMsec() * 0.001) * 3f;
+		scene.Position += (velocity + bobDirection * bobVelocity) * mag * delta;
+		scene.Position += Vector2.FromAngle((float)(Globals.random.NextDouble() * Math.PI)) * 0.1f;
+		velocity = velocity.Lerp(Vector2.Zero, 0.01f);
 		
 		// Avoid the edges
 		{
