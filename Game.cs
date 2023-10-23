@@ -93,21 +93,26 @@ public partial class Game : Node2D
 
 		int n = 0;
 		int f = 1;
+		ulong now = Time.GetTicksMsec();
 		metaballGroupData[0] = new Color(1, 0, 0, 0);
 		foreach (var feeder in feeders) {
 			if (feeder.parent != null) continue;
 			int groupID = 0;
+			float throb = 0;
+			float throbTime = 0;
 			if (feeder.availableSeeds > 0) {
 				groupID = f;
 				float opacity = feeder.availableSeeds / Feeder.maxAvailableSeeds;
 				opacity = 1 - Mathf.Pow(1 - opacity, 2);
 				metaballGroupData[groupID] = new Color(opacity, 0, 0, 0);
 				f++;
+				throb = 7;
+				throbTime = (float)(now - feeder.throbStartTime) / 1000;
 			}
 			int i = 0;
 			foreach (var element in feeder.elements) {
 				var position = element.art.GlobalPosition;
-				metaballData[n] = new Color(position.X, position.Y, 15, groupID);
+				metaballData[n] = new Color(position.X, position.Y, 15 + throb * (Mathf.Sin((i * (float)Math.PI * 2 / 3) + throbTime * 4) * 0.5f + 0.5f), groupID);
 				n++;
 				i++;
 			}

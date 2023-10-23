@@ -13,6 +13,7 @@ public class Feeder
 	const float margin = 50;
 	public float age;
 	public float availableSeeds;
+	public ulong throbStartTime;
 	public Node2D scene;
 	public Node2D art;
 	public Node2D fill;
@@ -48,6 +49,7 @@ public class Feeder
 		velocity = Vector2.Zero;
 		age = 0;
 		availableSeeds = 0;
+		throbStartTime = 0;
 
 		if (opacityTween != null) {
 			opacityTween.Stop();
@@ -140,7 +142,10 @@ public class Feeder
 		other.velocity = Vector2.Zero;
 		other.age = 0;
 
-		if (Size == 3) availableSeeds = maxAvailableSeeds;
+		if (Size == 3) {
+			availableSeeds = maxAvailableSeeds;
+			throbStartTime = Time.GetTicksMsec();
+		}
 
 		var averageGlobalPosition = Vector2.Zero;
 		var artPositions = new List<Vector2>();
