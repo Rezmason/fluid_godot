@@ -6,7 +6,8 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_4yqgf"]
 shader = ExtResource("2_uphuc")
 shader_parameter/metaballs = PackedFloat32Array()
-shader_parameter/threshold = 0.01
+shader_parameter/metaballGroups = PackedFloat32Array()
+shader_parameter/threshold = 0.015
 shader_parameter/meniscus = 0.00025
 shader_parameter/color = Vector4(0.478431, 0.0901961, 0, 0)
 

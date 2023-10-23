@@ -15,6 +15,7 @@ public partial class Game : Node2D
 	List<Feeder> feeders = new List<Feeder>();
 
 	Color[] metaballData = new Color[10];
+	Color[] metaballGroupData = new Color[3];
 
 	public override void _Ready()
 	{
@@ -30,6 +31,9 @@ public partial class Game : Node2D
 		var emptyColor = new Color(Colors.Black, 0);
 		for (int i = 0; i < 10; i++) {
 			metaballData[i] = emptyColor;
+		}
+		for (int i = 0; i < 3; i++) {
+			metaballGroupData[i] = emptyColor;
 		}
 
 		var tween = fade.CreateTween()
@@ -88,18 +92,29 @@ public partial class Game : Node2D
 		}
 
 		int n = 0;
+		int f = 1;
+		metaballGroupData[0] = new Color(1, 0, 0, 0);
 		foreach (var feeder in feeders) {
 			if (feeder.parent != null) continue;
-			float opacity = 1;
-			if (feeder.availableSeeds > 0) opacity =  feeder.availableSeeds / Feeder.maxAvailableSeeds;
+			int groupID = 0;
+			if (feeder.availableSeeds > 0) {
+				groupID = f;
+				float opacity = feeder.availableSeeds / Feeder.maxAvailableSeeds;
+				opacity = 1 - Mathf.Pow(1 - opacity, 2);
+				metaballGroupData[groupID] = new Color(opacity, 0, 0, 0);
+				f++;
+			}
+			int i = 0;
 			foreach (var element in feeder.elements) {
 				var position = element.art.GlobalPosition;
-				metaballData[n] = new Color(position.X, position.Y, 10, opacity);
+				metaballData[n] = new Color(position.X, position.Y, 15, groupID);
 				n++;
+				i++;
 			}
 		}
 
 		feederMetaballs.SetShaderParameter("metaballs", metaballData);
+		feederMetaballs.SetShaderParameter("metaballGroups", metaballGroupData);
 		
 		foreach (var alga in algae) {
 			alga.scene.Position = alga.scene.Position.Lerp(alga.goalPosition, 0.1f);

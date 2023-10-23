@@ -1,8 +1,4 @@
 Coding
-	Three feeder metaball groups in shader
-		Each with their own sum and opacity
-		Find the max and smoothstep
-
 	Feeders
 		Fake bobbing
 		Fake brownian motion
