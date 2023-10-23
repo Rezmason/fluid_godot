@@ -33,7 +33,7 @@ public partial class Game : Node2D
 			metaballData[i] = emptyColor;
 		}
 		for (int i = 0; i < 3; i++) {
-			metaballGroupData[i] = emptyColor;
+			metaballGroupData[i] = Colors.White;
 		}
 
 		var tween = fade.CreateTween()
@@ -94,7 +94,7 @@ public partial class Game : Node2D
 		int n = 0;
 		int f = 1;
 		ulong now = Time.GetTicksMsec();
-		metaballGroupData[0] = new Color(1, 0, 0, 0);
+		metaballGroupData[0] = Colors.White;
 		foreach (var feeder in feeders) {
 			if (feeder.parent != null) continue;
 			int groupID = 0;
@@ -103,7 +103,8 @@ public partial class Game : Node2D
 			if (feeder.availableSeeds > 0) {
 				groupID = f;
 				float opacity = feeder.availableSeeds / Feeder.maxAvailableSeeds;
-				opacity = 1 - Mathf.Pow(1 - opacity, 2);
+				// opacity = 1 - Mathf.Pow(1 - opacity, 2);
+				opacity = Mathf.Lerp(metaballGroupData[groupID].R, opacity, 0.1f);
 				metaballGroupData[groupID] = new Color(opacity, 0, 0, 0);
 				f++;
 				throb = 7;
@@ -116,6 +117,9 @@ public partial class Game : Node2D
 				n++;
 				i++;
 			}
+		}
+		for (; f < 3; f++) {
+			metaballGroupData[f] = Colors.White;
 		}
 
 		feederMetaballs.SetShaderParameter("metaballs", metaballData);
