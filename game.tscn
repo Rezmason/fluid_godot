@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://bfl30eeaw1gl1"]
 
-[ext_resource type="Script" path="res://Game.cs" id="1_brxqa"]
+[ext_resource type="Script" path="res://Game.gd" id="1_brxqa"]
 [ext_resource type="Shader" path="res://feeder_metaballs.gdshader" id="2_uphuc"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_4yqgf"]
