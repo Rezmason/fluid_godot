@@ -1,27 +1,20 @@
-using Godot;
-using System;
+class_name Globals
 
-public static class Globals
-{
-	public static Random random = new Random();
-	public static Vector2 screenSize;
-	public static bool isMousePressed;
-	public static Vector2 mousePosition;
-	public static Action<Alga> MuckChanged;
+static var random : RandomNumberGenerator = RandomNumberGenerator.new()
+static var screenSize : Vector2
+static var isMousePressed : bool
+static var mousePosition : Vector2
+static var muckChanged : Signaler = Signaler.new()
 
-	static SceneTree sceneTree;
+static var sceneTree
 
-	public static void Init(Node2D basis)
-	{
-		screenSize = ((Window)basis.GetViewport()).Size;
-		sceneTree = basis.GetTree();
-	}
+static func init(basis):
+	screenSize = basis.get_viewport().size
+	sceneTree = basis.get_tree()
 
-	public static SceneTreeTimer GetTimer(double timeSec, Action action)
-	{
-		var timer = sceneTree.CreateTimer(timeSec);
-		timer.Timeout += action;
+static func get_timer(timeSec : float, callable : Callable):
+	await sceneTree.create_timer(timeSec).timeout
+	callable.call()
 
-		return timer;
-	}
-}
+class Signaler:
+	signal sig;

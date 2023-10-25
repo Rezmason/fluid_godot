@@ -1,226 +1,185 @@
-using System;
-using Godot;
-using System.Collections.Generic;
+class_name Feeder
 
-public class Feeder
-{
-	private Color minSeedColor = Colors.Transparent;
-	private Color maxSeedColor = Colors.White;
-	private Vector2 bobDirection = Vector2.FromAngle((float)Math.PI * 0.16f);
+var minSeedColor : Color = Color.TRANSPARENT
+var maxSeedColor : Color = Color.WHITE
+var bobDirection : Vector2 = Vector2.from_angle(PI * 0.16)
 
-	public const int maxAvailableSeeds = 40;
-	const float minSeedDist = 100;
-	const float minDist = 80;
-	const float margin = 50;
-	public float age;
-	public float availableSeeds;
-	public ulong throbStartTime;
-	public Node2D scene;
-	public Node2D art;
-	public Node2D fill;
-	private List<Feeder> children = new List<Feeder>();
-	public List<Feeder> elements = new List<Feeder>();
-	public Feeder parent;
-	public Vector2 velocity = Vector2.Zero;
-	public int Size => elements.Count;
-	private Tween opacityTween;
-	
-	static PackedScene feederArt = ResourceLoader.Load<PackedScene>("res://feeder.tscn");
-	
-	public Feeder(int id)
-	{
-		scene = new Node2D();
-		scene.Name = $"Feeder{id}";
-		art = (Node2D)feederArt.Instantiate();
-		scene.AddChild(art);
-		fill = art.GetNode<Node2D>("Fill");
-	}
-	
-	public void Reset()
-	{
-		foreach (var child in children) {
-			scene.RemoveChild(child.scene);
-			child.parent = null;
-		}
-		children.Clear();
-		elements.Clear();
-		elements.Add(this);
-		art.Position = Vector2.Zero;
-		parent = null;
-		velocity = Vector2.Zero;
-		age = 0;
-		availableSeeds = 0;
-		throbStartTime = 0;
+const maxAvailableSeeds : int = 40
+const minSeedDist : float = 100
+const minDist : float = 80
+const margin : float = 50
+var age : float
+var availableSeeds : float
+var throbStartTime : int
+var scene : Node2D
+var art : Node2D
+var fill : Node2D
+var children : Array[Feeder] = []
+var elements : Array[Feeder] = []
+var parent : Feeder
+var velocity : Vector2 = Vector2.ZERO
+var size : int = 0 : get = _get_size
+func _get_size() -> int:
+	return elements.size()
+var opacityTween : Tween
 
-		if (opacityTween != null) {
-			opacityTween.Stop();
-			opacityTween = null;
-		}
-		fill.Set("modulate", maxSeedColor);
-	}
-	
-	public bool TryToSeed(Alga alga)
-	{
-		if (Size < 3 || availableSeeds <= 0) return false;
-		var minSeedDistSquared = minSeedDist * minSeedDist;
-		if (scene.GlobalPosition.DistanceSquaredTo(alga.scene.GlobalPosition) > minSeedDistSquared) {
-			return false;
-		}
+const feederArt : PackedScene = preload("res://feeder.tscn")
 
-		alga.Ripen();
-		availableSeeds--;
-		if (availableSeeds <= 0) {
-			Burst();
-		} else {
-			foreach (var feeder in elements) {
-				feeder.AnimateOpacity(availableSeeds / maxAvailableSeeds);
-			}
-		}
-		return true;
-	}
-	
-	private void Burst()
-	{
-		var oldPosition = scene.GlobalPosition;
-		var artPositions = new List<Vector2>();
-		foreach (var feeder in elements) {
-			artPositions.Add(feeder.art.GlobalPosition);
-		}
+func _init(id : int):
+	scene = Node2D.new()
+	scene.name = "Feeder{id}".format({id:id})
+	art = feederArt.instantiate()
+	scene.add_child(art)
+	fill = art.get_node("Fill")
+
+func reset():
+	for child in children:
+		scene.remove_child(child.scene)
+		child.parent = null
+	children.clear()
+	elements.clear()
+	elements.push_back(self)
+	art.position = Vector2.ZERO
+	parent = null
+	velocity = Vector2.ZERO
+	age = 0
+	availableSeeds = 0
+	throbStartTime = 0
+
+	if (opacityTween != null):
+		opacityTween.stop()
+		opacityTween = null
+	fill.set("modulate", maxSeedColor)
+
+func try_to_seed(alga : Alga) -> bool:
+	if (self.size < 3 || availableSeeds <= 0): return false
+	var minSeedDistSquared : float = minSeedDist * minSeedDist
+	var distSquared : float = scene.global_position.distance_squared_to(alga.scene.global_position);
+	if (distSquared > minSeedDistSquared): return false
+
+	alga.ripen()
+	availableSeeds -= 1
+	if (availableSeeds <= 0):
+		burst()
+	else:
+		var opacity : float = availableSeeds / maxAvailableSeeds
+		for feeder in elements: feeder.animate_opacity(opacity)
+	return true
+
+func burst():
+	var oldPosition : Vector2 = scene.global_position
+	var artPositions : Array[Vector2] = []
+	for feeder in elements:
+		artPositions.push_back(feeder.art.global_position)
+
+	var parentNode : Node2D = scene.get_parent()
+	for child in children:
+		scene.remove_child(child.scene)
+		child.parent = null
+		parentNode.add_child(child.scene)
+	children.clear()
 		
-		var parentNode = scene.GetParent();
-		foreach (var child in children) {
-			scene.RemoveChild(child.scene);
-			child.parent = null;
-			parentNode.AddChild(child.scene);
-		}
-		children.Clear();
+	for i in 3:
+		var feeder : Feeder = elements[i]
+		feeder.age = 0
+		feeder.scene.global_position = artPositions[i]
+		feeder.velocity = (artPositions[i] - oldPosition) * 6
+		feeder.art.position = Vector2.ZERO
 		
-		for (int i = 0; i < 3; i++) {
-			var feeder = elements[i];
-			feeder.age = 0;
-			feeder.scene.GlobalPosition = artPositions[i];
-			feeder.velocity = (artPositions[i] - oldPosition) * 6;
-			feeder.art.Position = Vector2.Zero;
-		}
-		
-		foreach (var feeder in elements) {
-			feeder.AnimateOpacity(1);
-		}
-		
-		elements.Clear();
-		elements.Add(this);
-		
-		availableSeeds = 0;
-	}
-	
-	public void AnimateOpacity(float amount) {
-		opacityTween = art.CreateTween()
-			.SetTrans(Tween.TransitionType.Quad)
-			.SetEase(Tween.EaseType.Out);
-		
-		var targetColor = minSeedColor.Lerp(maxSeedColor, amount);
-		opacityTween.TweenProperty(fill, "modulate", targetColor, 0.1f);
-	}
-	
-	public bool TryToCombine(Feeder other)
-	{
-		if (Size >= 3) return false;
-		
-		const float minDistSquared = minDist * minDist;
-		var otherGlobalPosition = other.art.GlobalPosition;
+	for feeder in elements: feeder.animate_opacity(1)
 
-		foreach (var feeder in elements) {
-			if (feeder.art.GlobalPosition.DistanceSquaredTo(otherGlobalPosition) > minDistSquared) {
-				return false;
-			}
-		}
-
-		children.Add(other);
-		elements.Add(other);
-		other.parent = this;
-
-		velocity = (velocity * (Size - 1) + other.velocity) / Size;
-		other.velocity = Vector2.Zero;
-		other.age = 0;
-
-		if (Size == 3) {
-			availableSeeds = maxAvailableSeeds;
-			throbStartTime = Time.GetTicksMsec();
-		}
-
-		var averageGlobalPosition = Vector2.Zero;
-		var artPositions = new List<Vector2>();
-		foreach (var feeder in elements) {
-			averageGlobalPosition += feeder.art.GlobalPosition;
-			artPositions.Add(feeder.art.GlobalPosition);
-		}
-		averageGlobalPosition /= Size;
-
-		scene.GlobalPosition = averageGlobalPosition;
-		other.scene.GetParent().RemoveChild(other.scene);
-		scene.AddChild(other.scene);
-		other.scene.Position = Vector2.Zero;
-		other.scene.Rotation = 0;
-
-		for (int i = 0; i < Size; i++) {
-			elements[i].art.GlobalPosition = artPositions[i];
-		}
-
-		return true;
-	}
-	
-	public void Update(float delta)
-	{
-		if (parent != null) return;
+	elements.clear()
+	elements.push_back(self)
 		
-		age += delta;
+	availableSeeds = 0
 
-		var oldPosition = scene.Position;
-		
-		var pushForce = Vector2.Zero;
-		if (Globals.isMousePressed) {
-			var localPushPosition = Globals.mousePosition - scene.Position;
-			var force = 2000f / localPushPosition.LengthSquared();
-			if (force > 0.05) {
-				pushForce = -localPushPosition * force;
-			}
-		}
-		
-		float mag = 10;
-		velocity += pushForce * mag * delta;
-		float bobVelocity = (float)Mathf.Sin((scene.Position.X + scene.Position.Y) * 0.006f + (double)Time.GetTicksMsec() * 0.001) * 3f;
-		scene.Position += (velocity + bobDirection * bobVelocity) * mag * delta;
-		scene.Position += Vector2.FromAngle((float)(Globals.random.NextDouble() * Math.PI)) * 0.1f;
-		velocity = velocity.Lerp(Vector2.Zero, 0.01f);
-		
-		// Avoid the edges
-		{
-			var currentRadius = 50;
-			var currentMargin = (Globals.screenSize - Vector2.One * (margin + currentRadius)) / 2;
-			var goalPosition = scene.Position.Clamp(-currentMargin, currentMargin);
-			scene.Position = scene.Position.Lerp(goalPosition, 0.08f);
-		}
+func animate_opacity(amount : float):
+	opacityTween = art.create_tween() \
+	.set_trans(Tween.TransitionType.TRANS_QUAD) \
+	.set_ease(Tween.EaseType.EASE_OUT)
+	var targetColor : Color = minSeedColor.lerp(maxSeedColor, amount)
+	opacityTween.tween_property(fill, "modulate", targetColor, 0.1)
 
-		scene.GlobalRotation += ((oldPosition.X + oldPosition.Y) - (scene.Position.X + scene.Position.Y)) / Size * 0.005f;
+func try_to_combine(other : Feeder) -> bool :
+	if (self.size >= 3): return false
+	const minDistSquared : float = minDist * minDist
+	var otherGlobalPosition : Vector2 = other.art.global_position
+
+	for feeder in elements:
+		var distSquared : float = feeder.art.global_position.distance_squared_to(otherGlobalPosition);
+		if (distSquared > minDistSquared): return false
+
+	children.push_back(other)
+	elements.push_back(other)
+	other.parent = self
+
+	velocity = (velocity * (self.size - 1) + other.velocity) / self.size
+	other.velocity = Vector2.ZERO
+	other.age = 0
+
+	if (self.size == 3):
+		availableSeeds = maxAvailableSeeds
+		throbStartTime = Time.get_ticks_msec()
+
+	var averageGlobalPosition : Vector2 = Vector2.ZERO
+	var artPositions : Array[Vector2] = []
+	for feeder in elements:
+		averageGlobalPosition += feeder.art.global_position
+		artPositions.push_back(feeder.art.global_position)
+	averageGlobalPosition /= self.size
+
+	scene.global_position = averageGlobalPosition
+	other.scene.get_parent().remove_child(other.scene)
+	scene.add_child(other.scene)
+	other.scene.position = Vector2.ZERO
+	other.scene.rotation = 0
+
+	for i in self.size: elements[i].art.global_position = artPositions[i]
+
+	return true
+
+func update(delta : float):
+	if (parent != null): return
 		
-		if (Size == 2) {
-			foreach (var feeder in elements) {
-				var art = feeder.art;
-				var goalPosition = art.Position * (minDist / 2) / art.Position.Length();
-				art.Position = art.Position.Lerp(goalPosition, 0.2f);
-			}
-		} else if (Size == 3) {
-			var averagePosition = (
-				elements[0].art.Position +
-				elements[1].art.Position +
-				elements[2].art.Position
-			) / 3;
-			foreach (var feeder in elements) {
-				var art = feeder.art;
-				var goalPosition = art.Position - averagePosition;
-				goalPosition *= (minDist / 2) / goalPosition.Length();
-				art.Position = art.Position.Lerp(goalPosition, 0.2f);
-			}
-		}
-	}
-}
+	age += delta
+
+	var oldPosition : Vector2 = scene.position
+		
+	var pushForce : Vector2 = Vector2.ZERO
+	if (Globals.isMousePressed):
+		var localPushPosition : Vector2 = Globals.mousePosition - scene.position
+		var force : float = 2000 / localPushPosition.length_squared()
+		if (force > 0.05):
+			pushForce = -localPushPosition * force
+
+	var mag : float = 10
+	velocity += pushForce * mag * delta
+	var bobVelocity : float = sin((scene.position.x + scene.position.y) * 0.006 + Time.get_ticks_msec() * 0.001) * 3
+	scene.position += (velocity + bobDirection * bobVelocity) * mag * delta
+	scene.position += Vector2.from_angle((Globals.random.randf() * PI)) * 0.1
+	velocity = velocity.lerp(Vector2.ZERO, 0.01)
+		
+	# Avoid the edges
+	var currentRadius : float = 50
+	var currentMargin : Vector2 = (Globals.screenSize - Vector2.ONE * (margin + currentRadius)) / 2
+	var edgeGoalPosition : Vector2 = scene.position.clamp(-currentMargin, currentMargin)
+	scene.position = scene.position.lerp(edgeGoalPosition, 0.08)
+
+	scene.global_rotation += ((oldPosition.x + oldPosition.y) - (scene.position.x + scene.position.y)) / self.size * 0.005
+		
+	if (self.size == 2):
+		for feeder in elements:
+			var art : Node2D = feeder.art
+			var goalPosition : Vector2 = art.position * (minDist / 2) / art.position.length()
+			art.position = art.position.lerp(goalPosition, 0.2)
+	elif (self.size == 3):
+		var averagePosition : Vector2 = (
+			elements[0].art.position +
+			elements[1].art.position +
+			elements[2].art.position
+		) / 3
+		for feeder in elements:
+			var art : Node2D = feeder.art
+			var goalPosition : Vector2 = art.position - averagePosition
+			goalPosition *= (minDist / 2) / goalPosition.length()
+			art.position = art.position.lerp(goalPosition, 0.2)

@@ -1,278 +1,225 @@
-using Godot;
-using System;
-using System.Collections.Generic;
+extends Node2D
+class_name Game
 
-public partial class Game : Node2D
-{
-	HashSet<Alga> muckyAlgae = new HashSet<Alga>();
-	bool gameCanEnd = false;
-	bool resetting = false;
-	Node2D fade;
-	ShaderMaterial feederMetaballs;
+var numMuckyAlgae : int = 0
+var gameCanEnd : bool = false
+var resetting : bool = false
+var fade : Node2D
+var feederMetaballs : ShaderMaterial
 
-	List<Alga> algae = new List<Alga>();
-	List<Forager> foragers = new List<Forager>();
-	List<Feeder> feeders = new List<Feeder>();
+var algae : Array[Alga] = []
+var foragers : Array[Forager] = []
+var feeders : Array[Feeder] = []
 
-	Color[] metaballData = new Color[10];
-	Color[] metaballGroupData = new Color[3];
+var metaballData : Array[Color] = []
+var metaballGroupData : Array[Color] = []
 
-	public override void _Ready()
-	{
-		Globals.Init(this);
-		Globals.MuckChanged += DetectEndgame;
-		fade = GetNode<Polygon2D>("FullscreenFade");
-		feederMetaballs = (ShaderMaterial)GetNode<CanvasItem>("FeederMetaballs").Material;
+func _ready():
+	Globals.init(self)
+	Globals.muckChanged.sig.connect(detect_endgame)
+	fade = get_node("FullscreenFade")
+	feederMetaballs = get_node("FeederMetaballs").material
 
-		SpawnAlgae();
-		SpawnForagers();
-		SpawnFeeders();
+	spawn_algae()
+	spawn_foragers()
+	spawn_feeders()
 
-		var emptyColor = new Color(Colors.Black, 0);
-		for (int i = 0; i < 10; i++) {
-			metaballData[i] = emptyColor;
-		}
-		for (int i = 0; i < 3; i++) {
-			metaballGroupData[i] = Colors.White;
-		}
+	var emptyColor : Color = Color(Color.BLACK, 0)
+	for i in 10:
+		metaballData.push_back(emptyColor)
+	for i in 3:
+		metaballGroupData.push_back(Color.WHITE)
 
-		var tween = fade.CreateTween()
-			.SetTrans(Tween.TransitionType.Quad)
-			.SetEase(Tween.EaseType.Out);
-		tween.TweenProperty(fade, "modulate", new Color(1, 1, 1, 0), 5);
-		tween.TweenProperty(fade, "visible", false, 0);
-	}
+	var tween : Tween = fade.create_tween() \
+	.set_trans(Tween.TransitionType.TRANS_QUAD) \
+	.set_ease(Tween.EaseType.EASE_OUT)
+	tween.tween_property(fade, "modulate", Color(Color.WHITE, 0), 5)
+	tween.tween_property(fade, "visible", false, 0)
 
-	public override void _UnhandledInput(InputEvent inputEvent)
-	{
-		if (inputEvent is InputEventMouse mouseEvent) {
-			Globals.isMousePressed = (mouseEvent.ButtonMask & MouseButtonMask.Left) == MouseButtonMask.Left;
-			Globals.mousePosition = GetLocalMousePosition();
-			
-			foreach (var alga in algae) {
-				if (alga.mucky || !Globals.isMousePressed) {
-					alga.goalPosition = alga.restingPosition;
-				} else {
-					var localPushPosition = Globals.mousePosition - alga.restingPosition;
-					float offset = -localPushPosition.Length() / 50;
-					offset *= Mathf.Pow(3, offset);
-					alga.goalPosition = alga.restingPosition + localPushPosition * offset;
-				}
-			}
-		}
-	}
+func _unhandled_input(inputEvent : InputEvent):
+	if (inputEvent is InputEventMouse):
+		const left = MouseButtonMask.MOUSE_BUTTON_MASK_LEFT
+		Globals.isMousePressed = (inputEvent.button_mask & left) == left
+		Globals.mousePosition = get_local_mouse_position()
 
-	public override void _Process(Double delta)
-	{	
-		float fDelta = (float)delta;
-		foreach (var feeder in feeders) {
-			feeder.Update(fDelta);
-		}
+		for alga in algae:
+			if (alga.mucky || !Globals.isMousePressed):
+				alga.goalPosition = alga.restingPosition
+			else:
+				var localPushPosition : Vector2 = Globals.mousePosition - alga.restingPosition
+				var offset : float = -localPushPosition.length() / 50
+				offset *= pow(3, offset)
+				alga.goalPosition = alga.restingPosition + localPushPosition * offset
+
+func _process(delta : float):
+	for feeder in feeders:
+		feeder.update(delta)
+
+	var seedingFeeders : Array[Feeder] = []
+
+	const minAge : float = 3
 		
-		var seedingFeeders = new List<Feeder>();
+	for i in feeders.size():
+		var feeder : Feeder = feeders[i]
+		if (feeder.parent != null || feeder.age < minAge): continue
+		if (feeder.size >= 3):
+			seedingFeeders.push_back(feeder)
+		else:
+			for j in range(i + 1, feeders.size()):
+				var other : Feeder = feeders[j]
+				if (other.parent != null || other.age < minAge || feeder.size + other.size > 3): continue
+				if (feeder.size >= other.size):
+					if (feeder.try_to_combine(other)): break
+				else:
+					if (other.try_to_combine(feeder)): break
 
-		const float minAge = 3;
+	var n : int = 0
+	var f : int = 1
+	var now : int = Time.get_ticks_msec()
+	metaballGroupData[0] = Color.WHITE
+	for feeder in feeders:
+		if (feeder.parent != null): continue
+		var groupID : int = 0
+		var throb : float = 0
+		var throbTime : float = 0
+		if (feeder.availableSeeds > 0):
+			groupID = f
+			var opacity : float = feeder.availableSeeds / Feeder.maxAvailableSeeds
+			# opacity = 1 - pow(1 - opacity, 2)
+			opacity = lerp(metaballGroupData[groupID].r, opacity, 0.1)
+			metaballGroupData[groupID] = Color(opacity, 0, 0, 0)
+			f += 1
+			throb = 7
+			throbTime = float(now - feeder.throbStartTime) / 1000
+		var i : int = 0
+		for element in feeder.elements:
+			var elementPosition : Vector2 = element.art.global_position
+			metaballData[n] = Color(
+				elementPosition.x,
+				elementPosition.y,
+				15 + throb * (sin((i * PI * 2 / 3) + throbTime * 4) * 0.5 + 0.5),
+				groupID
+			)
+			n += 1
+			i += 1
+	for j in range(f, 3):
+		metaballGroupData[f] = Color.WHITE
+
+	feederMetaballs.set_shader_parameter("metaballs", metaballData)
+	feederMetaballs.set_shader_parameter("metaballGroups", metaballGroupData)
 		
-		for (int i = 0; i < feeders.Count; i++) {
-			var feeder = feeders[i];
-			if (feeder.parent != null || feeder.age < minAge) continue;
-			if (feeder.Size >= 3) {
-				seedingFeeders.Add(feeder);
-			} else {
-				for (int j = i + 1; j < feeders.Count; j++) {
-					var other = feeders[j];
-					if (other.parent != null || other.age < minAge || feeder.Size + other.Size > 3) continue;
-					if (feeder.Size >= other.Size) {
-						if (feeder.TryToCombine(other)) break;
-					} else {
-						if (other.TryToCombine(feeder)) break;
-					}
-				}
-			}
-		}
-
-		int n = 0;
-		int f = 1;
-		ulong now = Time.GetTicksMsec();
-		metaballGroupData[0] = Colors.White;
-		foreach (var feeder in feeders) {
-			if (feeder.parent != null) continue;
-			int groupID = 0;
-			float throb = 0;
-			float throbTime = 0;
-			if (feeder.availableSeeds > 0) {
-				groupID = f;
-				float opacity = feeder.availableSeeds / Feeder.maxAvailableSeeds;
-				// opacity = 1 - Mathf.Pow(1 - opacity, 2);
-				opacity = Mathf.Lerp(metaballGroupData[groupID].R, opacity, 0.1f);
-				metaballGroupData[groupID] = new Color(opacity, 0, 0, 0);
-				f++;
-				throb = 7;
-				throbTime = (float)(now - feeder.throbStartTime) / 1000;
-			}
-			int i = 0;
-			foreach (var element in feeder.elements) {
-				var position = element.art.GlobalPosition;
-				metaballData[n] = new Color(position.X, position.Y, 15 + throb * (Mathf.Sin((i * (float)Math.PI * 2 / 3) + throbTime * 4) * 0.5f + 0.5f), groupID);
-				n++;
-				i++;
-			}
-		}
-		for (; f < 3; f++) {
-			metaballGroupData[f] = Colors.White;
-		}
-
-		feederMetaballs.SetShaderParameter("metaballs", metaballData);
-		feederMetaballs.SetShaderParameter("metaballGroups", metaballGroupData);
-		
-		foreach (var alga in algae) {
-			alga.scene.Position = alga.scene.Position.Lerp(alga.goalPosition, 0.1f);
+	for alga in algae:
+		alga.scene.position = alga.scene.position.lerp(alga.goalPosition, 0.1)
 			
-			if (alga.ripe || alga.occupant != null) continue;
+		if (alga.ripe || alga.occupant != null): continue
 			
-			foreach (var feeder in seedingFeeders) {
-				if (feeder.Size == 3 && feeder.TryToSeed(alga)) break;
-			}
-		}
-	}
+		for feeder in seedingFeeders:
+			if (feeder.size == 3 && feeder.try_to_seed(alga)): break
 
-	private void SpawnAlgae()
-	{
-		List<List<Alga>> grid = new List<List<Alga>>();
+func spawn_algae():
+	var grid : Array[Array] = []
 
-		const int numRows = 9, numColumns = 10;
-		var spacing = new Vector2(110, 90);
-		for (int i = 0; i < numRows; i++) {
-			var rowOffset = new Vector2(1 - (numColumns - i % 2), 1 - numRows) / 2;
-			var row = new List<Alga>();
-			for (int j = 0; j < numColumns; j++) {
-				if (i % 2 == 1 && j == numColumns - 1) {
-					row.Add(null);
-					continue;
-				}
-				var alga = new Alga(grid.Count, row.Count, (new Vector2(j, i) + rowOffset) * spacing);
-				row.Add(alga);
-				algae.Add(alga);
-				AddChild(alga.scene);
-				alga.Reset();
-			}
-			grid.Add(row);
-		}
+	const numRows : int = 9
+	const numColumns : int = 10
+	var spacing : Vector2 = Vector2(110, 90)
+	for i in numRows:
+		var rowOffset : Vector2 = Vector2(1 - (numColumns - i % 2), 1 - numRows) / 2
+		var row : Array[Alga] = []
+		for j in numColumns:
+			if (i % 2 == 1 && j == numColumns - 1):
+				row.push_back(null)
+				continue
+			var alga : Alga = Alga.new(grid.size(), row.size(), (Vector2(j, i) + rowOffset) * spacing)
+			row.push_back(alga)
+			algae.push_back(alga)
+			add_child(alga.scene)
+			alga.reset()
+		grid.push_back(row)
 
-		void ConnectNeighbors(Alga l1, Alga l2) {
-			if (l1 == null || l2 == null) return;
-			l1.neighbors.Add(l2);
-			l2.neighbors.Add(l1);
-		}
+	for i in numRows:
+		for j in numColumns:
+			var alga : Alga = grid[i][j]
+			if (alga == null): continue
+			if (j > 0):
+				Game.connect_neighbors(alga, grid[i][j - 1])
+			if (i > 0):
+				Game.connect_neighbors(alga, grid[i - 1][j])
+				var j2 : int = j + (i % 2) * 2 - 1
+				if (j2 >= 0):
+					Game.connect_neighbors(alga, grid[i - 1][j2])
 
-		for (int i = 0; i < numRows; i++) {
-			for (int j = 0; j < numColumns; j++) {
-				var alga = grid[i][j];
-				if (alga == null) continue;
-				if (j > 0) {
-					ConnectNeighbors(alga, grid[i][j - 1]);
-				}
-				if (i > 0) {
-					ConnectNeighbors(alga, grid[i - 1][j]);
-					int j2 = j + (i % 2) * 2 - 1;
-					if (j2 >= 0) {
-						ConnectNeighbors(alga, grid[i - 1][j2]);
-					}
-				}
-			}
-		}
-	}
+func spawn_foragers():
+	const numForagers : int = 2
+	for i in numForagers:
+		foragers.push_back(Forager.new(foragers.size()))
+	reset_foragers()
 
-	private void SpawnForagers()
-	{
-		const int numForagers = 2;
-		for (int i = 0; i < numForagers; i++) {
-			foragers.Add(new Forager(foragers.Count));
-		}
-		ResetForagers();
-	}
-	
-	private void SpawnFeeders()
-	{
-		const int numFeeders = 7;
-		for (int i = 0; i < numFeeders; i++) {
-			var feeder = new Feeder(feeders.Count);
-			feeders.Add(feeder);
-		}
-		ResetFeeders();
-	}
+func spawn_feeders():
+	const numFeeders : int = 7
+	for i in numFeeders:
+		feeders.push_back(Feeder.new(feeders.size()))
+	reset_feeders()
 
-	private void ResetForagers()
-	{
-		foreach (var forager in foragers) {
-			var alga = algae[Globals.random.Next(algae.Count)];
-			while (alga.occupant != null) {
-				alga = algae[Globals.random.Next(algae.Count)];
-			}
-			forager.Reset();
-			forager.Place(alga);
-		}
-	}
-	
-	private void ResetFeeders()
-	{
-		foreach (var feeder in feeders)
-		{
-			feeder.Reset();
-			AddChild(feeder.scene);
-			feeder.scene.GlobalPosition = new Vector2(
-				(float)Globals.random.NextDouble() - 0.5f,
-				(float)Globals.random.NextDouble() - 0.5f
-			) * Globals.screenSize;
-			feeder.velocity = new Vector2(
-				(float)Globals.random.NextDouble() - 0.5f,
-				(float)Globals.random.NextDouble() - 0.5f
-			) * 200;
-		}
-	}
+func reset_foragers():
+	for forager in foragers:
+		var alga : Alga = algae[Globals.random.randi_range(0, algae.size() - 1)]
+		while (alga.occupant != null):
+			alga = algae[Globals.random.randi_range(0, algae.size() - 1)]
+		forager.reset()
+		forager.place(alga)
 
-	private void DetectEndgame(Alga alga)
-	{
-		if (resetting) return;
+func reset_feeders():
+	for feeder in feeders:
+		feeder.reset()
+		add_child(feeder.scene)
+		feeder.scene.global_position = Vector2(
+			Globals.random.randf() - 0.5,
+			Globals.random.randf() - 0.5
+		) * Globals.screenSize
+		feeder.velocity = Vector2(
+			Globals.random.randf() - 0.5,
+			Globals.random.randf() - 0.5
+		) * 200
 
-		if (alga.mucky) {
-			muckyAlgae.Add(alga);
-		} else {
-			muckyAlgae.Remove(alga);
-		}
-		int numMuckyAlgae = muckyAlgae.Count;
+func detect_endgame(alga : Alga):
+	if (resetting): return
 
-		if (gameCanEnd) {
-			if (numMuckyAlgae == 0) {
-				Reset();
-			} else if ((float)numMuckyAlgae / algae.Count > 0.6) {
-				Reset();
-			}
-		} else if (!resetting && numMuckyAlgae >= 3) {
-			gameCanEnd = true;
-		}
-	}
+	if (alga.mucky):
+		numMuckyAlgae += 1
+	else:
+		numMuckyAlgae -= 1
 
-	private void Reset()
-	{
-		resetting = true;
-		gameCanEnd = false;
-		fade.Visible = true;
-		var tween = fade.CreateTween()
-			.SetTrans(Tween.TransitionType.Quad);
-		tween.TweenProperty(fade, "modulate", new Color(1, 1, 1, 1), 5)
-			.SetEase(Tween.EaseType.In);
-		tween.TweenCallback(Callable.From(() => {
-			foreach (var alga in algae) {
-				alga.Reset();
-			}
-			ResetForagers();
-			ResetFeeders();
-			muckyAlgae.Clear();
-			resetting = false;
-		}));
-		tween.TweenProperty(fade, "modulate", new Color(1, 1, 1, 0), 5)
-			.SetEase(Tween.EaseType.Out);
-		tween.TweenProperty(fade, "visible", false, 0);
-	}
-}
+	if (gameCanEnd):
+		if (numMuckyAlgae == 0):
+			reset()
+		elif (float(numMuckyAlgae) / algae.size() > 0.6):
+			reset()
+	elif (!resetting && numMuckyAlgae >= 3):
+		gameCanEnd = true
+
+func reset():
+	resetting = true
+	gameCanEnd = false
+	fade.visible = true
+	var tween : Tween = fade.create_tween() \
+	.set_trans(Tween.TransitionType.TRANS_QUAD)
+	tween.tween_property(fade, "modulate", Color.WHITE, 5) \
+	.set_ease(Tween.EaseType.EASE_IN)
+	tween.tween_callback(
+		func():
+			for alga in algae:
+				alga.reset()
+			reset_foragers()
+			reset_feeders()
+			numMuckyAlgae = 0
+			resetting = false
+	)
+	tween.tween_property(fade, "modulate", Color(Color.WHITE, 0), 5) \
+	.set_ease(Tween.EaseType.EASE_OUT)
+	tween.tween_property(fade, "visible", false, 0)
+
+static func connect_neighbors(l1 : Alga, l2 : Alga):
+	if (l1 == null || l2 == null): return
+	# if(!l1.neighbors.has(l2) || !l2.neighbors.has(l1)): return
+	l1.neighbors.push_back(l2)
+	l2.neighbors.push_back(l1)

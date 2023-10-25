@@ -1,31 +1,23 @@
-using Godot;
-using System;
+class_name Clicker
 
-public class Clicker
-{
-	private bool mouseOver = false;
-	private bool mousePressed = false;
-	private CollisionObject2D target;
-	private Action callback;
+var mouseOver : bool = false
+var mousePressed : bool = false
 
-	public Clicker(CollisionObject2D target, Action callback)
-	{
-		this.target = target;
-		this.callback = callback;
+func _init(target : CollisionObject2D, callable : Callable):
+	
+	target.input_event.connect(
+		func(viewport : Viewport, event : InputEvent, shapeIndex : int):
+			if (!(event is InputEventMouseButton)): return
+			if (event.button_index != MouseButton.MOUSE_BUTTON_LEFT): return
+			var mouseWasPressed : bool = mousePressed
+			mousePressed = event.pressed
+			if (mouseWasPressed && mouseOver && !mousePressed):
+				callable.call()
+	)
 
-		target.InputEvent += (_, inputEvent, _) => {
-			var mouseButtonEvent = inputEvent as InputEventMouseButton;
-			if (mouseButtonEvent == null || mouseButtonEvent.ButtonIndex != MouseButton.Left) return;
-			bool mouseWasPressed = mousePressed;
-			mousePressed = mouseButtonEvent.Pressed;
-			if (mouseWasPressed && mouseOver && !mousePressed) {
-				this.callback();
-			}
-		};
-		target.MouseEntered += () => mouseOver = true;
-		target.MouseExited += () => {
-			mouseOver = false;
-			mousePressed = false; // Not perfect, but fine for most cases
-		};
-	}
-}
+	target.mouse_entered.connect(func(): mouseOver = true)
+	target.mouse_exited.connect(
+		func():
+			mouseOver = false
+			mousePressed = false # Not perfect, but fine for most cases
+	)

@@ -1,158 +1,128 @@
-using Godot;
-using System;
-using System.Collections.Generic;
+class_name Alga
 
-public class Alga 
-{
-	public Node2D scene;
-	public Node2D art;
-	public Node2D muck;
-	public HashSet<Alga> neighbors = new HashSet<Alga>();
+var scene : Node2D
+var art : Node2D
+var muck : Node2D
+var neighbors : Array[Alga] = []
+var fruitAnimation : AnimationTree
 
-	private AnimationTree fruitAnimation;
+const algaArt : PackedScene = preload("res://alga.tscn")
 
-	static PackedScene algaArt = ResourceLoader.Load<PackedScene>("res://alga.tscn");
+var ripe : bool = false
+var mucky : bool = false
+var restingPosition : Vector2
+var goalPosition : Vector2
+var occupant : Forager = null
 
-	public bool ripe = false;
-	public bool mucky = false;
-	public Vector2 restingPosition;
-	public Vector2 goalPosition;
-	public Forager occupant = null;
+var muckTween : Tween
+var fruitTween : Tween
 
-	private Tween muckTween;
-	private Tween fruitTween;
+func _init(row : int, column : int, position : Vector2):
+	scene = Node2D.new()
+	scene.name = "Alga{row}_{column}".format({"row": row, "column": column})
 
-	public Alga(int row, int column, Vector2 position)
-	{
-		scene = new Node2D();
-		scene.Name = $"Alga{row}_{column}";
+	restingPosition = position
+	goalPosition = position
+	scene.position = position
 
-		restingPosition = position;
-		goalPosition = position;
-		this.scene.Position = position;
+	art = algaArt.instantiate()
+	fruitAnimation = art.get_node("AnimationTree")
+	scene.add_child(art)
 
-		art = (Node2D)algaArt.Instantiate();
-		fruitAnimation = art.GetNode<AnimationTree>("AnimationTree");
-		scene.AddChild(art);
+	muck = art.get_node("Muck")
+	muck.set("modulate", Color(1, 1, 1, 0))
+	muck.set("scale", Vector2(0, 0))
+	muck.visible = false
 
-		muck = art.GetNode<Node2D>("Muck");
-		muck.Set("modulate", new Color(1, 1, 1, 0));
-		muck.Set("scale", new Vector2(0, 0));
-		muck.Visible = false;
-	}
+func reset():
+	mucky = false
+	ripe = false
+	if (occupant != null):
+		scene.remove_child(occupant.scene)
+		occupant = null
 
-	public void Reset()
-	{
-		mucky = false;
-		ripe = false;
-		if (occupant != null) {
-			scene.RemoveChild(occupant.scene);
-			occupant = null;
-		}
+	if (muckTween != null):
+		muckTween.stop()
+		muckTween = null
 
-		if (muckTween != null) {
-			muckTween.Stop();
-			muckTween = null;
-		}
+	if (fruitTween != null):
+		fruitTween.stop()
+		fruitTween = null
 
-		if (fruitTween != null) {
-			fruitTween.Stop();
-			fruitTween = null;
-		}
+	muck.visible = false
+	muck.position = Vector2.ZERO
+	muck.modulate = Color.WHITE
 
-		muck.Visible = false;
-		muck.Position = Vector2.Zero;
-		muck.Modulate = new Color("white");
+	fruitAnimation.set("parameters/FruitBlend/blend_position", Vector2.ZERO)
+	art.position = Vector2.ZERO
 
-		fruitAnimation.Set("parameters/FruitBlend/blend_position", Vector2.Zero);
-		art.Position = Vector2.Zero;
-	}
+func animate_muck():
+	muck.visible = true
+	muckTween = muck.create_tween() \
+		.set_parallel(true) \
+		.set_trans(Tween.TransitionType.TRANS_QUAD) \
+		.set_ease(Tween.EaseType.EASE_OUT)
+	var duration = 0.3
+	var isHere = 1 if mucky else 0
+	muckTween.tween_property(muck, "position", Vector2.ZERO, duration)
+	muckTween.tween_property(muck, "scale", Vector2(isHere, isHere), duration)
+	muckTween.tween_property(muck, "modulate", Color(1, 1, 1, isHere), duration)
+	muckTween.tween_property(muck, "visible", mucky, duration)
 
-	private void AnimateMuck()
-	{
-		muck.Visible = true;
-		muckTween = muck.CreateTween().SetParallel(true)
-			.SetTrans(Tween.TransitionType.Quad)
-			.SetEase(Tween.EaseType.Out);
-		var duration = 0.3f;
-		float isHere = mucky ? 1 : 0;
-		muckTween.TweenProperty(muck, "position", new Vector2(0, 0), duration);
-		muckTween.TweenProperty(muck, "scale", new Vector2(isHere, isHere), duration);
-		muckTween.TweenProperty(muck, "modulate", new Color(1, 1, 1, isHere), duration);
-		muckTween.TweenProperty(muck, "visible", mucky, duration);
-	}
+var occupied : bool = false : get = _get_occupied
+func _get_occupied() -> bool:
+	return occupant != null
 
-	public bool Occupied => occupant != null;
+func animate_fruit():
+	fruitTween = art.create_tween()
+	fruitTween.tween_property(fruitAnimation, "parameters/FruitBlend/blend_position", \
+	Vector2(
+		1 if mucky else 0,
+		1 if ripe else 0
+	), 0.5) \
+	.set_trans(Tween.TransitionType.TRANS_QUAD) \
+	.set_ease(Tween.EaseType.EASE_OUT)
 
-	private void AnimateFruit()
-	{
-		fruitTween = art.CreateTween();
-		fruitTween.TweenProperty(fruitAnimation, "parameters/FruitBlend/blend_position",
-			new Vector2(
-				mucky ? 1 : 0,
-				ripe ? 1 : 0
-			), 0.5f
-		)
-		.SetTrans(Tween.TransitionType.Quad)
-		.SetEase(Tween.EaseType.Out);
-	}
+func ripen():
+	if (!ripe && occupant == null):
+		ripe = true
+		animate_fruit()
 
-	public void Ripen()
-	{
-		if (!ripe && occupant == null) {
-			ripe = true;
-			AnimateFruit();
-		}
-	}
+func eat():
+	if (ripe):
+		ripe = false
+		mucky = false
+		animate_muck()
+		animate_fruit()
+		Globals.muckChanged.sig.emit(self)
 
-	public void Eat()
-	{
-		if (ripe) {
-			ripe = false;
-			mucky = false;
-			AnimateMuck();
-			AnimateFruit();
-			Globals.MuckChanged(this);
-		}
-	}
+func wait_to_spread_muck():
+	Globals.get_timer(Globals.random.randf_range(1, 4),
+		func():
+			if (!mucky): return
+			if (Globals.random.randf() < 0.25): spread_muck()
+			wait_to_spread_muck()
+	)
 
-	private void WaitToSpreadMuck()
-	{
-		Globals.GetTimer(Globals.random.NextDouble() * 3 + 1, () => {
-			if (!mucky) return;
-			if (Globals.random.NextDouble() < 0.25) SpreadMuck();
-			WaitToSpreadMuck();
-		});
-	}
+func spread_muck():
+	var cleanNeighbor : Alga = Alga.get_random_neighbor(self,
+		func(neighbor): return !neighbor.mucky
+	)
+	if (cleanNeighbor != null):
+		cleanNeighbor.receive_muck_from(scene.global_position)
 
-	public void SpreadMuck()
-	{
-		var cleanNeighbor = Alga.GetRandomNeighbor(this, neighbor => !neighbor.mucky);
-		if (cleanNeighbor != null) {
-			cleanNeighbor.ReceiveMuckFrom(scene.GlobalPosition);
-		}
-	}
+func receive_muck_from(origin):
+	mucky = true
+	muck.global_position = origin
+	animate_muck()
+	animate_fruit()
+	Globals.muckChanged.sig.emit(self)
+	wait_to_spread_muck()
 
-	private void ReceiveMuckFrom(Vector2 origin)
-	{
-		mucky = true;
-		muck.GlobalPosition = origin;
-		AnimateMuck();
-		AnimateFruit();
-		Globals.MuckChanged(this);
-		WaitToSpreadMuck();
-	}
-
-	public static Alga GetRandomNeighbor(Alga alga, Predicate<Alga> pred = null)
-	{
-		var candidates = new List<Alga>();
-		foreach (var neighbor in alga.neighbors)
-		{
-			if (pred == null || pred(neighbor)) {
-				candidates.Add(neighbor);
-			}
-		}
-		if (candidates.Count == 0) return null;
-		return candidates[Globals.random.Next(candidates.Count)];
-	}
-}
+static func get_random_neighbor(alga : Alga, pred : Callable = Callable()) -> Alga:
+	var candidates : Array[Alga] = []
+	for neighbor in alga.neighbors:
+		if (pred.is_null() || pred.call(neighbor)):
+			candidates.push_back(neighbor)
+	if (candidates.size() == 0): return null
+	return candidates[Globals.random.randi_range(0, candidates.size() - 1)]
